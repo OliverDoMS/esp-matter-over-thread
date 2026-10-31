@@ -1,0 +1,6 @@
+The application initialization is based on Espressif's public-domain (or CC0)
+icd_app example at commit d3aa1b96b9357b208f15cc12d1864dc124414c6b:
+https://github.com/espressif/esp-matter/tree/d3aa1b96b9357b208f15cc12d1864dc124414c6b/examples/icd_app
+
+Application additions are distributed under Apache-2.0; see LICENSE.
+External SDKs and managed components retain their own license terms.

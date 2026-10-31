@@ -1,0 +1,27 @@
+menu "DoNetIoT base system"
+    config BASE_NODE_LABEL
+        string "Matter node label (maximum 32 bytes)"
+        default "DoNetIoT H2 Base"
+
+    config BASE_BUTTON_GPIO
+        int "Service button GPIO (active low)"
+        range 9 14
+        default 9
+        help
+            GPIO9 is the BOOT button on the documented H2 Super Mini layout.
+            Do not hold BOOT during reset unless entering the ROM downloader.
+
+    config BASE_DISABLE_SUPERMINI_LEDS
+        bool "Turn off GPIO13 LED and clear GPIO8 WS2812 at startup"
+        default y
+        help
+            For the Super Mini layout shown in this repository only.
+            Clearing an LED does not remove its electrical standby current.
+
+    config BASE_TEST_CONTACT
+        bool "Create a virtual contact sensor for initial commissioning tests"
+        default y
+        help
+            A short button press toggles this TEST contact. No physical sensor
+            is read. Add real sensor endpoints in sensors.cpp in later variants.
+endmenu
