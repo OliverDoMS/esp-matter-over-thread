@@ -1,5 +1,8 @@
 build/
 dist/
+dist-usb/
+dist-usbdiag/
+usb-monitor.log
 managed_components/
 sdkconfig
 sdkconfig.old

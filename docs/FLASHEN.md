@@ -40,6 +40,15 @@ kurz druecken. Der COM-Port kann sich beim Wechsel zwischen Bootloader und Anwen
 
 ## Anlernen
 
+### Diagnoseversion 0.1.1-usbdiag
+
+Dieses Diagnoseprofil setzt `CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=y` und deaktiviert
+automatischen Light-sleep auch ohne USB-Host. Es dient zur Eingrenzung der
+USB-Abbrueche und ist nicht fuer Batteriebetrieb oder Strommessungen geeignet.
+Beim Start muessen `Firmware 0.1.1-usbdiag; reset reason=...` und
+`DIAGNOSTIC: automatic Light-sleep DISABLED` erscheinen. Die bisherige
+USB-Verbindungserkennung allein hatte die Abbrueche am Testboard nicht beseitigt.
+
 Bei Verbindung mit einem USB-Host bleibt die Firmware wach, damit die native
 USB-Konsole erreichbar bleibt. Automatischer Light-sleep ist dann gesperrt;
 fuer Strommessungen den USB-Host trennen und separat versorgen.
@@ -47,6 +56,12 @@ Ein verschwindender COM-Port allein beweist keinen Neustart. Fuer die Diagnose
 den aktuellen Port mit `python -m serial.tools.list_ports` ermitteln und die
 Konsole mit `python -m serial.tools.miniterm COM4 115200` oeffnen (Port anpassen).
 Miniterm mit Strg+] schliessen, bevor erneut geflasht wird.
+
+Falls Miniterm bei USB-Abbruechen beendet wird, im Repository stattdessen
+`python scripts/monitor.py` starten. Dieser Monitor erkennt genau ein natives
+Espressif-USB-Geraet automatisch, verbindet nach Abbruechen auch bei geaendertem
+COM-Port erneut und sichert die Ausgabe in `usb-monitor.log`. Bei mehreren
+Geraeten den Port mit `--port COM4` festlegen. Mit Strg+C vor dem Flashen beenden.
 
 Das ungekoppelte Geraet oeffnet nach dem Start automatisch ein Anlernfenster.
 In Home Assistant oder einem anderen passenden Matter-Controller ein neues

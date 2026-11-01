@@ -1,4 +1,12 @@
 menu "DoNetIoT base system"
+    config BASE_DIAGNOSTIC_NO_SLEEP
+        bool "Diagnostic firmware: disable automatic Light-sleep"
+        default n
+        help
+            Use temporarily to investigate native USB disconnects. This disables
+            automatic Light-sleep regardless of USB connection detection and
+            increases current consumption. Not for battery measurements.
+
     config BASE_NODE_LABEL
         string "Matter node label (maximum 32 bytes)"
         default "DoNetIoT H2 Base"

@@ -7,6 +7,8 @@
 #include <esp_check.h>
 #include <esp_log.h>
 #include <esp_pm.h>
+#include <esp_system.h>
+#include <esp_app_desc.h>
 #include <nvs_flash.h>
 #include <esp_matter.h>
 #include <app/icd/server/ICDNotifier.h>
@@ -21,6 +23,11 @@
 
 namespace {
 constexpr char TAG[] = "base";
+#if CONFIG_BASE_DIAGNOSTIC_NO_SLEEP
+constexpr bool kDiagnosticNoSleep = true;
+#else
+constexpr bool kDiagnosticNoSleep = false;
+#endif
 
 void open_commissioning_window()
 {
@@ -70,7 +77,8 @@ void device_event(const ChipDeviceEvent *event, intptr_t)
     using namespace chip::DeviceLayer;
     switch (event->Type) {
     case DeviceEventType::kCommissioningComplete:
-        ESP_LOGI(TAG, "Commissioning complete; automatic Light-sleep/ICD remains enabled");
+        ESP_LOGI(TAG, "Commissioning complete; automatic Light-sleep %s; ICD enabled",
+                 kDiagnosticNoSleep ? "disabled (diagnostic)" : "enabled");
         break;
     case DeviceEventType::kCommissioningWindowOpened:
         ESP_LOGI(TAG, "Commissioning window open");
@@ -110,6 +118,8 @@ esp_err_t identify(esp_matter::identification::callback_type_t, uint16_t endpoin
 
 extern "C" void app_main()
 {
+    ESP_LOGI(TAG, "Firmware %s; reset reason=%d", esp_app_get_description()->version,
+             static_cast<int>(esp_reset_reason()));
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_LOGW(TAG, "NVS cannot be opened; erasing NVS to recover");
@@ -121,8 +131,11 @@ extern "C" void app_main()
     esp_pm_config_t pm{};
     pm.max_freq_mhz = CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ;
     pm.min_freq_mhz = 32;
-    pm.light_sleep_enable = true;
+    pm.light_sleep_enable = !kDiagnosticNoSleep;
     ESP_ERROR_CHECK(esp_pm_configure(&pm));
+    if (kDiagnosticNoSleep) {
+        ESP_LOGW(TAG, "DIAGNOSTIC: automatic Light-sleep DISABLED; not for battery measurements");
+    }
 
     esp_matter::node::config_t config{};
     static_assert(sizeof(CONFIG_BASE_NODE_LABEL) <= sizeof(config.root_node.basic_information.node_label),
@@ -144,7 +157,8 @@ extern "C" void app_main()
     ESP_ERROR_CHECK(esp_matter::start(device_event));
     // Initialize the button only after ScheduleWork can safely reach the running stack.
     ESP_ERROR_CHECK(base::init_board(queue_button));
-    ESP_LOGI(TAG, "DoNetIoT H2 Base 0.1.0: Thread sleepy end device / SIT ICD");
+    ESP_LOGI(TAG, "DoNetIoT H2 Base %s: Thread sleepy end device / SIT ICD",
+             esp_app_get_description()->version);
     ESP_LOGI(TAG, "BOOT: <1 s TEST contact; 3-9 s pairing; >=10 s factory reset, on release");
     ESP_LOGI(TAG, "Battery measurement not fitted/enabled; no invented voltage or percentage");
 }
