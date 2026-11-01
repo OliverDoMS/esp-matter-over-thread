@@ -40,6 +40,14 @@ kurz druecken. Der COM-Port kann sich beim Wechsel zwischen Bootloader und Anwen
 
 ## Anlernen
 
+Bei Verbindung mit einem USB-Host bleibt die Firmware wach, damit die native
+USB-Konsole erreichbar bleibt. Automatischer Light-sleep ist dann gesperrt;
+fuer Strommessungen den USB-Host trennen und separat versorgen.
+Ein verschwindender COM-Port allein beweist keinen Neustart. Fuer die Diagnose
+den aktuellen Port mit `python -m serial.tools.list_ports` ermitteln und die
+Konsole mit `python -m serial.tools.miniterm COM4 115200` oeffnen (Port anpassen).
+Miniterm mit Strg+] schliessen, bevor erneut geflasht wird.
+
 Das ungekoppelte Geraet oeffnet nach dem Start automatisch ein Anlernfenster.
 In Home Assistant oder einem anderen passenden Matter-Controller ein neues
 Matter-Geraet hinzufuegen. Der unveraenderte Entwicklungs-Build verwendet die
