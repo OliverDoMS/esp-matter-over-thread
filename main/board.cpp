@@ -70,9 +70,13 @@ esp_err_t base::init_board(ButtonCallback callback)
     gpio_config.gpio_num = CONFIG_BASE_BUTTON_GPIO;
     gpio_config.active_level = 0;
     gpio_config.enable_power_save = true;
+    // Keep peripheral power-down disabled in sdkconfig: button 4.2.3 disables
+    // EXT1 on wake but only re-arms GPIO wake on the next power-save entry.
     button_handle_t button = nullptr;
     ESP_RETURN_ON_ERROR(iot_button_new_gpio_device(&button_config, &gpio_config, &button), TAG, "Button init failed");
     ESP_RETURN_ON_ERROR(iot_button_register_cb(button, BUTTON_PRESS_DOWN, nullptr, pressed, nullptr), TAG, "Button down callback failed");
     ESP_RETURN_ON_ERROR(iot_button_register_cb(button, BUTTON_PRESS_UP, nullptr, released, nullptr), TAG, "Button up callback failed");
+    ESP_LOGI(TAG, "BOOT GPIO%d: power-save button with GPIO wakeup; peripheral power-down disabled",
+             CONFIG_BASE_BUTTON_GPIO);
     return ESP_OK;
 }

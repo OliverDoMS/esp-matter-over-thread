@@ -112,6 +112,16 @@ class PackageTests(unittest.TestCase):
                 pkg.package(self.build, Path(self.temp.name) / "dist")
         merge.assert_not_called()
 
+    def test_peripheral_power_down_rejected_for_gpio_wakeup(self):
+        config_file = self.build / "config" / "sdkconfig.json"
+        config = json.loads(config_file.read_text())
+        config["PM_POWER_DOWN_PERIPHERAL_IN_LIGHT_SLEEP"] = True
+        config_file.write_text(json.dumps(config))
+        with patch.object(pkg.subprocess, "run") as merge:
+            with self.assertRaisesRegex(ValueError, "PM_POWER_DOWN_PERIPHERAL_IN_LIGHT_SLEEP"):
+                pkg.package(self.build, Path(self.temp.name) / "dist")
+        merge.assert_not_called()
+
     def test_text_config_accepts_disabled_diagnostic_and_rejects_enabled(self):
         config_file = Path(self.temp.name) / "sdkconfig"
         lines = [f"{name}={value}" if value != "n" else f"# {name} is not set"

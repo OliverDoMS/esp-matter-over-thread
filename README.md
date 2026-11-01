@@ -5,7 +5,9 @@ ESP32-H2 Super Mini (4 MB Flash), externe geregelte 3,3-V-Versorgung.
 
 ## Aktueller Stand
 
-Version 0.1.2-lowpower aktiviert automatischen Light-sleep wieder. Mit der
+Version 0.1.3-gpiowake aktiviert automatischen Light-sleep mit GPIO-Wakeup und
+laesst die Peripherie dabei versorgt. Die vorherige Version 0.1.2-lowpower reagierte
+am Testboard nach zwei Minuten Ruhe nicht mehr auf den Testkontakt. Mit der
 Diagnoseversion 0.1.1-usbdiag wurden am Testboard Matter-Kopplung mit Home Assistant,
 Kontaktwechsel per BOOT sowie Wiederanlauf nach RST und Stromunterbrechung bestaetigt.
 Sleep-/Wake-Verhalten und Stromverbrauch der Low-power-Version sind noch am Board

@@ -40,8 +40,8 @@ kurz druecken. Der COM-Port kann sich beim Wechsel zwischen Bootloader und Anwen
 
 ## Anlernen
 
-Version 0.1.2-lowpower setzt `CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=n`. Beim Start
-erscheinen `Firmware 0.1.2-lowpower; reset reason=...` und
+Version 0.1.3-gpiowake setzt `CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=n`. Beim Start
+erscheinen `Firmware 0.1.3-gpiowake; reset reason=...` und
 `LOW POWER: automatic Light-sleep ENABLED; USB host may inhibit sleep`.
 Bei erkanntem USB-Host soll der SDK-Schutz automatischen Light-sleep sperren.
 In frueheren Tests traten trotzdem USB-Abbrueche auf; ein stabiler COM-Port ist
@@ -78,7 +78,17 @@ Freigabefunktion seines bestehenden Controllers teilen.
 
 ## Funktionstest
 
-### Wechsel von 0.1.1-usbdiag auf 0.1.2-lowpower
+### Wechsel auf 0.1.3-gpiowake
+
+0.1.2-lowpower reagierte am Testboard nach zwei Minuten Ruhe nicht mehr auf BOOT.
+Die Hypothese fuer 0.1.3-gpiowake betrifft den Wechsel der Weckquelle im
+[button-4.2.3-Treiber](https://github.com/espressif/esp-iot-solution/blob/9aee93cdca202e88f05ac0c4399480cbf8eccaf2/components/button/button_gpio.c):
+Mit `CONFIG_PM_POWER_DOWN_PERIPHERAL_IN_LIGHT_SLEEP=y` setzt die Initialisierung
+EXT1, `exit_power_save` entfernt EXT1, und `enter_power_save` aktiviert nur GPIO.
+Das neue Profil setzt die Option auf `n` und verwendet durchgehend GPIO-Wakeup.
+Light-sleep und der stromsparende Tastenmodus bleiben aktiviert. Der Verbrauch
+kann gegenueber ausgeschalteter Peripherie hoeher liegen; Funktion und Strom
+sind am Board noch zu pruefen. Die button-Abhaengigkeit ist auf 4.2.3 festgelegt.
 
 1. Monitor schliessen. BOOT halten, RST kurz druecken, BOOT loslassen.
 2. Im Repository `./dist-lowpower/flash.ps1 -Port COM21 -ApplicationOnly -Baud 115200`
