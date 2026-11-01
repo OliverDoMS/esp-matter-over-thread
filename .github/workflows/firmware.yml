@@ -1,0 +1,41 @@
+name: Build ESP32-H2 firmware
+on:
+  push:
+    branches: [main, 'codex/**', 'feature/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -v
+      - run: g++ -std=c++17 -I main -fsyntax-only tests/button_actions.cpp
+      - shell: pwsh
+        run: ./tests/test_flash.ps1
+
+  firmware:
+    needs: host-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    container:
+      image: espressif/esp-matter:release-v1.4.2_idf_v5.4.1
+      options: --user root
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile, validate configuration and package binaries
+        run: bash scripts/build.sh
+      - name: Upload flash package
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32h2-supermini-base
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
