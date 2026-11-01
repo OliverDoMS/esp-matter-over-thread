@@ -27,7 +27,7 @@ class PackageTests(unittest.TestCase):
             "flash_settings": {"flash_mode": "dio", "flash_freq": "48m", "flash_size": "4MB"},
         }
         (self.build / "config").mkdir()
-        config = {name.removeprefix("CONFIG_"): True if value == "y" else value.strip('"')
+        config = {name.removeprefix("CONFIG_"): {"y": True, "n": False}.get(value, value.strip('"'))
                   for name, value in pkg.REQUIRED_CONFIG.items()}
         (self.build / "config" / "sdkconfig.json").write_text(json.dumps(config))
         (self.build / "project_description.json").write_text('{"project_version":"0.1.0"}')
@@ -101,6 +101,26 @@ class PackageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "PM_ENABLE"):
                 pkg.package(self.build, Path(self.temp.name) / "dist")
         merge.assert_not_called()
+
+    def test_no_sleep_diagnostic_rejected_by_low_power_packaging(self):
+        config_file = self.build / "config" / "sdkconfig.json"
+        config = json.loads(config_file.read_text())
+        config["BASE_DIAGNOSTIC_NO_SLEEP"] = True
+        config_file.write_text(json.dumps(config))
+        with patch.object(pkg.subprocess, "run") as merge:
+            with self.assertRaisesRegex(ValueError, "BASE_DIAGNOSTIC_NO_SLEEP"):
+                pkg.package(self.build, Path(self.temp.name) / "dist")
+        merge.assert_not_called()
+
+    def test_text_config_accepts_disabled_diagnostic_and_rejects_enabled(self):
+        config_file = Path(self.temp.name) / "sdkconfig"
+        lines = [f"{name}={value}" if value != "n" else f"# {name} is not set"
+                 for name, value in pkg.REQUIRED_CONFIG.items()]
+        config_file.write_text("\n".join(lines))
+        pkg.validate_config(config_file)
+        config_file.write_text("\n".join(lines) + "\nCONFIG_BASE_DIAGNOSTIC_NO_SLEEP=y\n")
+        with self.assertRaisesRegex(ValueError, "BASE_DIAGNOSTIC_NO_SLEEP"):
+            pkg.validate_config(config_file)
 
 
 if __name__ == "__main__":

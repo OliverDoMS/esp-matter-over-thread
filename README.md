@@ -5,9 +5,12 @@ ESP32-H2 Super Mini (4 MB Flash), externe geregelte 3,3-V-Versorgung.
 
 ## Aktueller Stand
 
-Version 0.1.0 ist ein Entwicklungsstand. Ein erfolgreicher Firmware-Build und die
-Pruefung auf dem echten Board stehen noch aus. Der Workflow erzeugt erst nach
-erfolgreicher Kompilierung ein Flash-Paket. Im Repository liegen keine fertigen BIN-Dateien.
+Version 0.1.2-lowpower aktiviert automatischen Light-sleep wieder. Mit der
+Diagnoseversion 0.1.1-usbdiag wurden am Testboard Matter-Kopplung mit Home Assistant,
+Kontaktwechsel per BOOT sowie Wiederanlauf nach RST und Stromunterbrechung bestaetigt.
+Sleep-/Wake-Verhalten und Stromverbrauch der Low-power-Version sind noch am Board
+zu pruefen. Der Workflow erzeugt nach erfolgreichem Build ein Flash-Paket.
+Im Repository liegen keine fertigen BIN-Dateien.
 
 Enthalten sind Thread Sleepy End Device, Matter Short Idle Time ICD, automatischer
 Light-sleep und ein virtueller Kontakt zum Testen der Verbindung. Keine WLAN-Verbindung,
@@ -27,21 +30,20 @@ Die BOOT-Taste beim Einschalten/Reset fuehrt stattdessen in den ROM-Downloadmodu
 
 ## Firmware erzeugen
 
-Der vorgesehene Build laeuft ueber GitHub Actions. Im Branch `codex/base-system`
-die lokalen Dateien committen und pushen:
+Der vorgesehene Build laeuft ueber GitHub Actions. Aenderungen auf dem aktuellen
+Arbeitsbranch committen und pushen:
 
 ```powershell
 git add .
-git commit -m "Add ESP32-H2 low-power Matter base firmware"
-git push -u origin codex/base-system
+git commit -m "Update ESP32-H2 Matter firmware"
+git push
 ```
 
 Unter **Actions → Build ESP32-H2 firmware** den erfolgreichen Lauf oeffnen und
 das Artefakt **esp32h2-supermini-base** herunterladen und entpacken.
 Der Build verwendet ESP-IDF 5.4.1 und den exakten ESP-Matter-Commit aus `versions.env`
 (Releasefamilie Matter 1.4.2). Die aufgeloesten Komponenten-Versionen werden im
-Flash-Paket als `dependencies.lock` mitgeliefert. Komponenten sind bis zum ersten
-erfolgreichen Build noch nicht vollstaendig versioniert.
+Flash-Paket als `dependencies.lock` mitgeliefert.
 
 Alternativ mit Docker Desktop im Linux-Container-Modus aus dem Repositoryordner:
 

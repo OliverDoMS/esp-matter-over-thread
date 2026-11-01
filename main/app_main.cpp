@@ -135,6 +135,8 @@ extern "C" void app_main()
     ESP_ERROR_CHECK(esp_pm_configure(&pm));
     if (kDiagnosticNoSleep) {
         ESP_LOGW(TAG, "DIAGNOSTIC: automatic Light-sleep DISABLED; not for battery measurements");
+    } else {
+        ESP_LOGI(TAG, "LOW POWER: automatic Light-sleep ENABLED; USB host may inhibit sleep");
     }
 
     esp_matter::node::config_t config{};

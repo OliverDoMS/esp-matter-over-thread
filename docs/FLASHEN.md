@@ -40,18 +40,13 @@ kurz druecken. Der COM-Port kann sich beim Wechsel zwischen Bootloader und Anwen
 
 ## Anlernen
 
-### Diagnoseversion 0.1.1-usbdiag
-
-Dieses Diagnoseprofil setzt `CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=y` und deaktiviert
-automatischen Light-sleep auch ohne USB-Host. Es dient zur Eingrenzung der
-USB-Abbrueche und ist nicht fuer Batteriebetrieb oder Strommessungen geeignet.
-Beim Start muessen `Firmware 0.1.1-usbdiag; reset reason=...` und
-`DIAGNOSTIC: automatic Light-sleep DISABLED` erscheinen. Die bisherige
-USB-Verbindungserkennung allein hatte die Abbrueche am Testboard nicht beseitigt.
-
-Bei Verbindung mit einem USB-Host bleibt die Firmware wach, damit die native
-USB-Konsole erreichbar bleibt. Automatischer Light-sleep ist dann gesperrt;
-fuer Strommessungen den USB-Host trennen und separat versorgen.
+Version 0.1.2-lowpower setzt `CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=n`. Beim Start
+erscheinen `Firmware 0.1.2-lowpower; reset reason=...` und
+`LOW POWER: automatic Light-sleep ENABLED; USB host may inhibit sleep`.
+Bei erkanntem USB-Host soll der SDK-Schutz automatischen Light-sleep sperren.
+In frueheren Tests traten trotzdem USB-Abbrueche auf; ein stabiler COM-Port ist
+deshalb kein Abnahmekriterium fuer den Betrieb ohne USB-Host.
+Die vorherige Version 0.1.1-usbdiag sperrte automatischen Light-sleep vollstaendig.
 Ein verschwindender COM-Port allein beweist keinen Neustart. Fuer die Diagnose
 den aktuellen Port mit `python -m serial.tools.list_ports` ermitteln und die
 Konsole mit `python -m serial.tools.miniterm COM4 115200` oeffnen (Port anpassen).
@@ -82,6 +77,28 @@ Ein schon gekoppeltes Geraet fuer eine weitere Fabric bevorzugt ueber die
 Freigabefunktion seines bestehenden Controllers teilen.
 
 ## Funktionstest
+
+### Wechsel von 0.1.1-usbdiag auf 0.1.2-lowpower
+
+1. Monitor schliessen. BOOT halten, RST kurz druecken, BOOT loslassen.
+2. Im Repository `./dist-lowpower/flash.ps1 -Port COM21 -ApplicationOnly -Baud 115200`
+   ausfuehren; Port anpassen. Nur die Anwendung aktualisieren, ohne `-EraseAll`.
+   Partitionstabelle und Datenmodell sind unveraendert; Kopplungsdaten bleiben erhalten.
+3. Falls moeglich die oben genannte Version und Low-power-Meldung im Startlog pruefen.
+4. USB am PC trennen und das Board ueber seinen USB-Anschluss aus einem stabilen
+   USB-Netzteil versorgen. Batterie und externen Wandler fuer diesen Vergleich abtrennen.
+   Ein PC-USB-Host kann den Schlafmodus blockieren; eine Powerbank kann sich bei
+   geringem Verbrauch abschalten und ist daher kein verlaesslicher Testaufbau.
+5. Zwei Minuten warten, BOOT kurz druecken und Kontaktwechsel in Home Assistant
+   pruefen. Nach weiteren fuenf Minuten wiederholen. Keine erneute Kopplung starten.
+6. RST und danach eine Stromunterbrechung einzeln pruefen, jeweils den Wiederbeitritt
+   abwarten und den Testkontakt umschalten. Die Wartezeit bis zum Wiederbeitritt notieren.
+
+Diese Tests bestaetigen die Funktion, aber noch nicht das tatsaechliche Schlafen
+oder einen bestimmten Verbrauch. Anschliessend den mittleren Strom mit geeignetem
+Messgeraet ohne USB-Host bestimmen; dabei Board-LEDs und Spannungsregler mit erfassen.
+
+### Allgemeine Pruefungen
 
 1. Der Controller zeigt einen Kontaktkanal an.
 2. BOOT kurz druecken: der virtuelle Kontakt wechselt offen/geschlossen.

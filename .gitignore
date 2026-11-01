@@ -2,7 +2,10 @@ build/
 dist/
 dist-usb/
 dist-usbdiag/
+dist-lowpower/
 usb-monitor.log
+*-monitor.log
+reset-test.log
 managed_components/
 sdkconfig
 sdkconfig.old

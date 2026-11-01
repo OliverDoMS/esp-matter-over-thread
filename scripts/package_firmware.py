@@ -19,7 +19,7 @@ REQUIRED_CONFIG = {
     "CONFIG_FREERTOS_USE_TICKLESS_IDLE": "y",
     "CONFIG_IEEE802154_SLEEP_ENABLE": "y",
     "CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION": "y",
-    "CONFIG_BASE_DIAGNOSTIC_NO_SLEEP": "y",
+    "CONFIG_BASE_DIAGNOSTIC_NO_SLEEP": "n",
 }
 
 
@@ -27,7 +27,8 @@ def validate_config(path: Path) -> None:
     values = dict(line.split("=", 1) for line in path.read_text().splitlines()
                   if line.startswith("CONFIG_") and "=" in line)
     for key, expected in REQUIRED_CONFIG.items():
-        if values.get(key) != expected:
+        # Disabled Kconfig booleans appear as comments in sdkconfig.
+        if values.get(key, "n") != expected:
             raise ValueError(f"Build configuration mismatch: {key} must be {expected}")
 
 
@@ -73,8 +74,8 @@ def package(build: Path, output: Path) -> None:
     if config.exists():
         config_values = json.loads(config.read_text())
         for name, expected in REQUIRED_CONFIG.items():
-            value = config_values.get(name.removeprefix("CONFIG_"))
-            wanted = True if expected == "y" else expected.strip('"')
+            value = config_values.get(name.removeprefix("CONFIG_"), False if expected == "n" else None)
+            wanted = {"y": True, "n": False}.get(expected, expected.strip('"'))
             if value != wanted:
                 raise ValueError(f"Resolved sdkconfig mismatch: {name}={value!r}")
     else:

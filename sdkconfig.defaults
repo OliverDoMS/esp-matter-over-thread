@@ -55,8 +55,8 @@ CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
 # Keep the native USB console reachable while a PC is connected.
 # Automatic Light-sleep remains available after disconnecting the USB host.
 CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION=y
-# Temporary diagnostic profile: rule out automatic Light-sleep entirely.
-CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=y
+# Normal low-power profile; retain the diagnostic switch for troubleshooting.
+CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=n
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=4
 CONFIG_ENABLE_OTA_REQUESTOR=n
