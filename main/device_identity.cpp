@@ -13,6 +13,7 @@
 #include <platform/CHIPDeviceLayer.h>
 #include <platform/CommissionableDataProvider.h>
 #include <platform/ConfigurationManager.h>
+#include <platform/DeviceInstanceInfoProvider.h>
 
 #if !CONFIG_CUSTOM_COMMISSIONABLE_DATA_PROVIDER
 #error "Enable CONFIG_CUSTOM_COMMISSIONABLE_DATA_PROVIDER in sdkconfig.defaults"
@@ -114,15 +115,8 @@ public:
 
 IdentityProvider s_provider;
 
-void store_if_changed(const char *label, const char *wanted, CHIP_ERROR (chip::DeviceLayer::ConfigurationManager::*get)(char *, size_t),
-                      CHIP_ERROR (chip::DeviceLayer::ConfigurationManager::*store)(const char *, size_t))
+void log_store_error(const char *label, CHIP_ERROR err)
 {
-    auto &config = chip::DeviceLayer::ConfigurationMgr();
-    char current[40] = {};
-    if ((config.*get)(current, sizeof(current)) == CHIP_NO_ERROR && std::strcmp(current, wanted) == 0) {
-        return;
-    }
-    const CHIP_ERROR err = (config.*store)(wanted, std::strlen(wanted));
     if (err != CHIP_NO_ERROR) {
         ESP_LOGE(TAG, "Could not store %s: %" CHIP_ERROR_FORMAT, label, err.Format());
     }
@@ -136,10 +130,18 @@ void publish_names_locked(intptr_t)
                   s_credentials.mac[2], s_credentials.mac[3], s_credentials.mac[4], s_credentials.mac[5]);
     std::snprintf(unique, sizeof(unique), "dniot-%02x%02x%02x%02x%02x%02x", s_credentials.mac[0], s_credentials.mac[1],
                   s_credentials.mac[2], s_credentials.mac[3], s_credentials.mac[4], s_credentials.mac[5]);
-    store_if_changed("serial number", serial, &chip::DeviceLayer::ConfigurationManager::GetSerialNumber,
-                     &chip::DeviceLayer::ConfigurationManager::StoreSerialNumber);
-    store_if_changed("unique ID", unique, &chip::DeviceLayer::ConfigurationManager::GetUniqueId,
-                     &chip::DeviceLayer::ConfigurationManager::StoreUniqueId);
+    // Write only when different, to spare flash cycles.
+    auto &config = chip::DeviceLayer::ConfigurationMgr();
+    char current[40] = {};
+    auto *info = chip::DeviceLayer::GetDeviceInstanceInfoProvider();
+    if (info == nullptr || info->GetSerialNumber(current, sizeof(current)) != CHIP_NO_ERROR ||
+        std::strcmp(current, serial) != 0) {
+        log_store_error("serial number", config.StoreSerialNumber(serial, std::strlen(serial)));
+    }
+    current[0] = 0;
+    if (config.GetUniqueId(current, sizeof(current)) != CHIP_NO_ERROR || std::strcmp(current, unique) != 0) {
+        log_store_error("unique ID", config.StoreUniqueId(unique, std::strlen(unique)));
+    }
 }
 }
 
