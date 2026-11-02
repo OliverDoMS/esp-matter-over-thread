@@ -157,6 +157,7 @@ extern "C" void app_main()
     ESP_ERROR_CHECK(set_openthread_platform_config(&thread));
 
     ESP_ERROR_CHECK(esp_matter::start(device_event));
+    ESP_ERROR_CHECK(base::sensors::start());
     // Initialize the button only after ScheduleWork can safely reach the running stack.
     ESP_ERROR_CHECK(base::init_board(queue_button));
     ESP_LOGI(TAG, "DoNetIoT H2 Base %s: Thread sleepy end device / SIT ICD",

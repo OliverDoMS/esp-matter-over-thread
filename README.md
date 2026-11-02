@@ -96,3 +96,24 @@ auf ein Geraet. `tests/button_actions.cpp` prueft ausserdem die Tasten-Zeitgrenz
 per C++-Compile-time-Assertions, insbesondere die Grenze fuer den Werksreset.
 
 Grundlage: Espressifs [ICD-Beispiel](https://github.com/espressif/esp-matter/tree/d3aa1b96b9357b208f15cc12d1864dc124414c6b/examples/icd_app).
+
+## Variante Regensensor
+
+Auf dem Branch `rain-sensor`: analoge Regenplatine als Matter-Geraetetyp *Rain Sensor*
+(Boolean State, `true` = Regen). Weiterhin nur Thread, Short Idle Time ICD und Light Sleep.
+
+| Regenplatine | ESP32-H2 | Hinweis |
+|---|---|---|
+| AO | GPIO1 (ADC1) | `BASE_RAIN_ADC_GPIO` |
+| VCC | GPIO10 | `BASE_RAIN_POWER_GPIO`, nur waehrend der Messung an |
+| GND | GND | |
+
+- Messung alle 60 s (`BASE_RAIN_INTERVAL_S`): Sensor an, 100 ms einschwingen, 8 Werte mit
+  Ausreisserfilter, Sensor aus. Kurzer BOOT-Druck loest sofort eine Messung aus.
+- Die Platine liefert nass eine NIEDRIGERE Spannung. Regen beginnt unter
+  `BASE_RAIN_WET_BELOW_MV` (1500) und endet ueber `BASE_RAIN_DRY_ABOVE_MV` (2000).
+  Startwerte: trocken und nass im USB-Log (`Rain sensor ... mV`) ablesen und per
+  `idf.py menuconfig` anpassen.
+- Der virtuelle Testkontakt ist in dieser Variante aus (`BASE_TEST_CONTACT=n`).
+- Die Anlernung laeuft ueber Matter (Code/QR), es steht kein Thread-Schluessel in der Firmware.
+- Nicht gebaut und nicht auf Hardware getestet; `tests/rain_logic.cpp` prueft die Auswertung.

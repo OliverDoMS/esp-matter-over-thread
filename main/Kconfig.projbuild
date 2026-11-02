@@ -28,8 +28,61 @@ menu "DoNetIoT base system"
 
     config BASE_TEST_CONTACT
         bool "Create a virtual contact sensor for initial commissioning tests"
-        default y
+        default n
         help
             A short button press toggles this TEST contact. No physical sensor
             is read. Add real sensor endpoints in sensors.cpp in later variants.
+
+    config BASE_RAIN_SENSOR
+        bool "Rain sensor (analog rain board, Matter Rain Sensor device type)"
+        default y
+        help
+            Reads an analog rain board. The board outputs a LOWER voltage when wet.
+            The sensor is powered from a GPIO only while measuring.
+
+    config BASE_RAIN_ADC_GPIO
+        int "Rain board analog output (ADC1 pin)"
+        depends on BASE_RAIN_SENSOR
+        range 1 5
+        default 1
+
+    config BASE_RAIN_POWER_GPIO
+        int "Rain board VCC GPIO (switched off between measurements)"
+        depends on BASE_RAIN_SENSOR
+        range 0 14
+        default 10
+
+    config BASE_RAIN_INTERVAL_S
+        int "Measurement interval in seconds"
+        depends on BASE_RAIN_SENSOR
+        range 5 3600
+        default 60
+
+    config BASE_RAIN_SETTLE_MS
+        int "Settling time after switching the sensor on (ms)"
+        depends on BASE_RAIN_SENSOR
+        range 10 2000
+        default 100
+
+    config BASE_RAIN_SAMPLES
+        int "Samples per measurement (outliers are trimmed)"
+        depends on BASE_RAIN_SENSOR
+        range 3 30
+        default 8
+
+    config BASE_RAIN_WET_BELOW_MV
+        int "Rain starts below this voltage (mV)"
+        depends on BASE_RAIN_SENSOR
+        range 100 3000
+        default 1500
+        help
+            Starting point only. Measure your board dry and wet (see the log) and adjust.
+
+    config BASE_RAIN_DRY_ABOVE_MV
+        int "Rain ends above this voltage (mV)"
+        depends on BASE_RAIN_SENSOR
+        range 100 3000
+        default 2000
+        help
+            Must be above the wet threshold; the gap is the hysteresis.
 endmenu
