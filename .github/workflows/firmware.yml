@@ -32,7 +32,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Compile, validate configuration and package binaries
-        run: bash scripts/build.sh
+        run: |
+          set -o pipefail
+          if ! bash scripts/build.sh 2>&1 | tee build.log; then
+            # Show the first errors as annotations so they are readable without opening the log.
+            grep -E "error:|Error |ERROR|Traceback|ValueError|CMake Error|undefined reference" build.log | head -15 | cut -c1-400 | while IFS= read -r line; do echo "::error::${line}"; done
+            exit 1
+          fi
       - name: Upload flash package
         uses: actions/upload-artifact@v4
         with:
