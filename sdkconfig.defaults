@@ -62,6 +62,9 @@ CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=4
 CONFIG_ENABLE_OTA_REQUESTOR=n
 
+# Per-device passcode, discriminator, salt and serial number derived from the chip MAC
+# (main/device_identity.cpp). Attestation still uses the Matter test certificates.
+CONFIG_CUSTOM_COMMISSIONABLE_DATA_PROVIDER=y
 # Development credentials, not a certified commercial product.
 CONFIG_DEVICE_VENDOR_ID=0xFFF1
 CONFIG_DEVICE_PRODUCT_ID=0x8000

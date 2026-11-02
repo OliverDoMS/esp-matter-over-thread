@@ -1,5 +1,6 @@
 // Based on Espressif's public-domain icd_app; application additions Apache-2.0.
 #include "board.h"
+#include "device_identity.h"
 #include "sensors.h"
 
 #include <cstdio>
@@ -156,7 +157,9 @@ extern "C" void app_main()
     thread.port_config.task_queue_size = 10;
     ESP_ERROR_CHECK(set_openthread_platform_config(&thread));
 
+    ESP_ERROR_CHECK(base::identity::install());
     ESP_ERROR_CHECK(esp_matter::start(device_event));
+    ESP_ERROR_CHECK(base::identity::publish_names());
     ESP_ERROR_CHECK(base::sensors::start());
     // Initialize the button only after ScheduleWork can safely reach the running stack.
     ESP_ERROR_CHECK(base::init_board(queue_button));

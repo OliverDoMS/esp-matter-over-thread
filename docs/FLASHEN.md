@@ -38,6 +38,21 @@ Bei Verbindungsproblemen BOOT gedrueckt halten, RST kurz druecken, BOOT loslasse
 und erneut flashen. Falls noetig `-Baud 115200` ergaenzen. Nach dem Flashen RST
 kurz druecken. Der COM-Port kann sich beim Wechsel zwischen Bootloader und Anwendung aendern.
 
+## Anlerncode je Geraet (Regensensor-Variante)
+
+Diese Variante verwendet NICHT den gemeinsamen Testcode. Anlerncode, Discriminator und
+Seriennummer werden aus der MAC-Adresse des Chips abgeleitet. Die MAC zeigt esptool beim
+Flashen (`BASE MAC`, oder `python -m esptool read_mac`). Den Code berechnet:
+
+```powershell
+python scripts/pairing_code.py 74:4d:bd:65:e1:4d
+```
+
+Ausgabe: Seriennummer `DNIOT-<MAC>`, Setup-PIN, Discriminator und der 11-stellige manuelle
+Anlerncode fuer Home Assistant. Dasselbe steht beim Start im USB-Log (`identity: Pairing: ...`).
+Die Werte sind nicht geheim; das Anlernfenster oeffnet nur der BOOT-Taster. Die Matter-
+Testzertifikate (Vendor `0xFFF1`) bleiben, es ist weiterhin kein zertifiziertes Produkt.
+
 ## Anlernen
 
 Version 0.1.3-gpiowake setzt `CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=n`. Beim Start
