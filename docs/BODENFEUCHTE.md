@@ -2,8 +2,9 @@
 
 Ab 0.3.0: [Home-Assistant-Konfiguration und Stromsparbetrieb](ENERGIESPAREN.md).
 Das Standard-Messintervall ist jetzt 60 Minuten und ueber Matter auswaehlbar.
-GPIO1 bereitet eine externe schaltbare Versorgung vor; ohne Schalter bleibt
-VCC fuer den Funktionstest an 3V3. Die folgenden Diagnoseabschnitte beziehen
+Ab 0.3.1 versorgt GPIO1 den Sensor direkt (HIGH=an, LOW=aus). Vorher muss noch
+die neue Firmware installiert werden; 0.3.0 hat eine andere Polaritaet.
+Die folgenden Diagnoseabschnitte beziehen
 sich auf 0.2.x, wo automatischer Light-sleep noch deaktiviert war.
 
 Seit Version 0.2.0-soil-usbdiag ersetzt eine echte ADC-Messung den virtuellen
@@ -12,7 +13,7 @@ Sensorversorgung bleibt fuer den ersten Funktionstest dauerhaft eingeschaltet.
 Automatischer Light-sleep ist wie im bewaehrten USB-Diagnoseprofil deaktiviert.
 Diese Version ist noch nicht fuer Batterielaufzeitmessungen vorgesehen.
 
-## Verdrahtung
+## Diagnose-Verdrahtung fuer 0.2.x und 0.3.0
 
 Board vor dem Verdrahten stromlos machen. Fuer den ersten Test nur USB nutzen,
 Batterie und Wandler abtrennen.
@@ -27,6 +28,10 @@ Nicht an 5 V betreiben. GPIO4 ist beim H2 ADC1 Kanal 3. Anders als beim alten
 ESPHome-C3-Aufbau wird VCC hier nicht ueber GPIO1 geschaltet. Die Elektronik
 des Sensors und die markierte Eintauchgrenze muessen trocken bleiben.
 Optional 100 nF von GPIO4 nach GND, nahe am Board, zur ADC-Filterung.
+
+**Ab 0.3.1:** Sensor-VCC stattdessen direkt an GPIO1 anschliessen, wie in
+ENERGIESPAREN.md beschrieben. GPIO1 nicht mit 3V3 verbinden. Erst Firmware
+aktualisieren, dann bei stromlosem Board das Sensor-VCC-Kabel umstecken.
 
 ## Flashen und Kopplung
 

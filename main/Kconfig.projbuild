@@ -57,23 +57,30 @@ menu "DoNetIoT base system"
             Release BOOT to execute. GPIO13 must not be used as the service button.
 
     config BASE_SOIL_SWITCHED_POWER
-        bool "Prepare GPIO control for an external sensor power switch"
+        bool "Switch the soil sensor supply between measurements"
         depends on BASE_SOIL_MOISTURE
         default y
         help
-            GPIO drives a MOSFET gate or load-switch enable, never the sensor
-            supply directly. Without the external switch, VCC may stay at 3V3
-            for testing, but the sensor itself then remains permanently powered.
+            The default direct-GPIO profile powers the sensor from GPIO1.
+            Alternatively select an external switch and configure its polarity.
+
+    config BASE_SOIL_DIRECT_GPIO_POWER
+        bool "Power the capacitive sensor directly from the supply GPIO"
+        depends on BASE_SOIL_SWITCHED_POWER
+        default y
+        help
+            HIGH supplies the sensor; LOW switches it off. Use maximum drive
+            strength and verify the loaded voltage on the actual sensor.
 
     config BASE_SOIL_POWER_GPIO
-        int "External sensor power switch control GPIO"
+        int "Sensor supply or external switch control GPIO"
         depends on BASE_SOIL_SWITCHED_POWER
         range 0 14
         default 1
 
     config BASE_SOIL_POWER_ACTIVE_LOW
         bool "Power switch is active low (P-channel MOSFET gate)"
-        depends on BASE_SOIL_SWITCHED_POWER
+        depends on BASE_SOIL_SWITCHED_POWER && !BASE_SOIL_DIRECT_GPIO_POWER
         default y
 
     config BASE_SOIL_SETTLE_MS

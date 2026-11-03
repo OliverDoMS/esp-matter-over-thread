@@ -1,6 +1,13 @@
 # Firmware flashen und testen
 
-## Konfiguration und Stromsparprofil 0.3.0-soil-config
+## Direkte Sensorversorgung mit 0.3.1-soil-gpio
+
+0.3.1 versorgt den Sensor direkt aus GPIO1 (HIGH=an, LOW=aus), mit hoechster
+Treiberstaerke. Erst das Anwendungsupdate installieren, dann stromlos
+Sensor-VCC von 3V3 auf GPIO1 umstecken. GPIO1 nicht mit 3V3 verbinden.
+Die Polaritaet unterscheidet sich von 0.3.0; Details: ENERGIESPAREN.md.
+
+## Konfiguration und Stromsparprofil ab 0.3.0
 
 Das neue Profil ergaenzt zwei ModeSelect-Endpunkte fuer Home Assistant und
 aktiviert automatischen Light-sleep. Standardintervall 60 Minuten; Verdrahtung

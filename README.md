@@ -5,8 +5,10 @@ ESP32-H2 Super Mini (4 MB Flash), externe geregelte 3,3-V-Versorgung.
 
 ## Aktueller Stand
 
-Version 0.3.0-soil-config liest einen kapazitiven Bodenfeuchtesensor v1.2/v2.0
-an GPIO4. Ein externer Versorgungsschalter kann ueber GPIO1 angesteuert werden.
+Version 0.3.1-soil-gpio liest einen kapazitiven Bodenfeuchtesensor v1.2/v2.0
+an GPIO4. Sensor-VCC kommt direkt an GPIO1: HIGH waehrend der Messung,
+LOW dazwischen. GND bleibt an GND. VCC erst nach Installation von 0.3.1 umstecken;
+0.3.0 verwendet noch die umgekehrte Polaritaet fuer einen externen Schalter.
 Trocken-/Nasskalibrierung per BOOT wird in NVS gespeichert. Ohne Kalibrierung
 wird kein Prozentwert erfunden. Messung erfolgt beim Start, standardmaessig alle 60 Minuten
 und auf kurzen BOOT-Druck. Anleitung: [BODENFEUCHTE.md](docs/BODENFEUCHTE.md).
@@ -16,8 +18,9 @@ Die Home-Assistant-Geraeteseite erhaelt zwei Matter-Modusauswahlen:
 **Messintervall** (1, 5, 10, 15, 30, 60, 120, 360, 720, 1440 Minuten).
 Einstellungen bleiben bei Neustart erhalten. Automatischer Light-sleep ist
 aktiviert; fuer echte Verbrauchsmessungen USB vom PC trennen.
-Die neuen Einstellungs-Endpunkte und der Stromsparbetrieb sind am Board noch
-zu bestaetigen. Die Hardware der schaltbaren Versorgung ist separat aufzubauen.
+Die neuen Einstellungs-Endpunkte, die direkte GPIO-Versorgung und der
+Stromsparbetrieb sind am Board noch zu bestaetigen. Nach dem Umstecken die
+Versorgungsspannung unter Sensorlast und beide Kalibrierreferenzen pruefen.
 
 Seit 0.2.1: Auswahl waehrend des Haltens an der blauen GPIO13-LED erkennen,
 anstatt Sekunden abzuzaehlen. Beim ersten Blink loslassen fuer trocken,

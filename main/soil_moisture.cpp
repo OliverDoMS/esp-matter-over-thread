@@ -20,6 +20,9 @@
 #include <sdkconfig.h>
 
 #if CONFIG_BASE_SOIL_MOISTURE
+#if CONFIG_BASE_SOIL_DIRECT_GPIO_POWER && CONFIG_BASE_SOIL_POWER_ACTIVE_LOW
+#error "Direct GPIO sensor power must be active HIGH"
+#endif
 namespace {
 constexpr char TAG[] = "soil";
 TaskHandle_t s_task = nullptr;
@@ -202,6 +205,12 @@ esp_err_t base::soil::start(uint16_t endpoint_id)
     power.mode = GPIO_MODE_OUTPUT;
     err = gpio_config(&power);
     if (err != ESP_OK) return err;
+#if CONFIG_BASE_SOIL_DIRECT_GPIO_POWER
+    err = gpio_set_drive_capability(static_cast<gpio_num_t>(CONFIG_BASE_SOIL_POWER_GPIO), GPIO_DRIVE_CAP_3);
+    if (err != ESP_OK) return err;
+    ESP_LOGI(TAG, "Direct sensor VCC on GPIO%d: HIGH=ON, LOW=OFF, drive capability=3",
+             CONFIG_BASE_SOIL_POWER_GPIO);
+#endif
     err = gpio_sleep_sel_dis(static_cast<gpio_num_t>(CONFIG_BASE_SOIL_POWER_GPIO));
     if (err != ESP_OK) return err;
     err = sensor_power(false);

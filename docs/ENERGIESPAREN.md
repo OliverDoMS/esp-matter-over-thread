@@ -1,4 +1,4 @@
-# Stromsparbetrieb und Home-Assistant-Einstellungen ab 0.3.0
+# Stromsparbetrieb und Home-Assistant-Einstellungen ab 0.3.1
 
 ## Bedienung auf der Geraeteseite
 
@@ -42,35 +42,39 @@ Ein angeschlossener PC-USB-Host kann Light-sleep sperren. Verbrauch daher ohne
 PC messen. Light-sleep, Thread-Polling, Regler und Board-LED-Elektronik gemeinsam
 erfassen; aus der Softwarekonfiguration keine Batterielaufzeit ableiten.
 
-## Schaltbare Sensorversorgung vorbereiten
+## Direkte geschaltete GPIO-Versorgung ab 0.3.1
 
-GPIO1 ist nur ein Steuersignal. Den Sensor nicht ungeprueft direkt daraus
-versorgen. Das Standardprofil erwartet einen **externen P-Kanal-MOSFET** als
-High-Side-Schalter, der bei GPIO1=LOW einschaltet:
+Auf Wunsch wird die direkte GPIO-Versorgung aus dem bisherigen Sensoraufbau
+uebernommen. Sensor-VCC kommt an GPIO1, der nur waehrend einer Messung HIGH
+ist. Dazwischen ist GPIO1 LOW. Die Firmware setzt Treiberstaerke
+`GPIO_DRIVE_CAP_3` und behaelt den Ausgangszustand im Light-sleep bei.
+
+**Zuerst 0.3.1 installieren, dann stromlos umstecken:** Version 0.3.0 benutzt
+GPIO1 noch aktiv LOW fuer einen externen P-MOSFET. Sensor-VCC wird von 3V3 auf
+GPIO1 umgesteckt; GPIO1 darf nicht mit der 3V3-Schiene verbunden werden.
 
 | Verbindung | Ziel |
 |---|---|
-| Geregelte 3V3 | P-MOSFET Source |
-| P-MOSFET Drain | Sensor VCC |
-| GPIO1 ueber etwa 1 kOhm | P-MOSFET Gate |
-| 100 kOhm zwischen Gate und Source | Haltet Sensor beim Start ausgeschaltet |
+| GPIO1 | Sensor VCC |
 | Sensor AOUT | GPIO4 |
 | Sensor GND | Board GND |
 
-Vor dem Aufbau die konkrete Source-/Drain-/Gate-Pinbelegung und Eignung des
-MOSFETs fuer VGS=-3,3 V pruefen. Kein ungeprueftes Modul und keine 5-V-Schiene
-verwenden. Fuer ein anderes Lastschaltermodul GPIO-Polaritaet und Beschaltung
-anhand seines Datenblatts anpassen (`BASE_SOIL_POWER_ACTIVE_LOW`).
+Nach dem Umstecken die VCC-Spannung waehrend der Messung unter Sensorlast
+pruefen. Der Ausgang ist keine ideale 3,3-V-Spannungsquelle; die Versorgung
+kann gegenueber der 3V3-Schiene abfallen. Die beiden Kalibrierreferenzen mit
+der tatsaechlichen GPIO-Versorgung erneut pruefen. Vorherige Erfahrungen mit
+dem Aufbau ersetzen noch nicht diese Messung am konkreten H2.
 
 Der Steuerausgang ist vor dem Start des Messtasks auf aus gesetzt und bleibt
 auch im Light-sleep stabil. Pro Messung wird eingeschaltet, standardmaessig
 500 ms gewartet, abgetastet und wieder ausgeschaltet. `BASE_SOIL_SETTLE_MS`
 kann fuer den konkreten Sensor angepasst werden.
 
-Solange der externe Schalter fehlt, kann VCC fuer den Funktionstest weiter
-direkt an 3V3 bleiben. Dann schaltet die Firmware zwar GPIO1, aber der Sensor
-selbst bleibt dauerhaft versorgt. Das ist noch kein Nachweis des angestrebten
-stromsparenden Gesamtsystems.
+Fuer einen Funktionstest kann VCC weiterhin direkt an 3V3 bleiben, solange
+GPIO1 dabei frei bleibt. Dann ist der Sensor dauerhaft versorgt und spart
+selbst noch keinen Strom. Ein externer Schalter ist im Standardprofil nicht
+noetig; dafuer waere `BASE_SOIL_DIRECT_GPIO_POWER` zu deaktivieren und seine
+Polaritaet passend einzustellen.
 
 ## Abnahme
 
@@ -79,8 +83,8 @@ stromsparenden Gesamtsystems.
 3. Sofortmessung und Trocken-/Nasskalibrierung von dort aus ausloesen.
 4. Messintervall testweise auf 1 Minute setzen und automatische Messung abwarten.
 5. Neustart: gewaehltes Intervall und Kalibrierung muessen erhalten bleiben.
-6. Auf 60 Minuten zurueckstellen. Versorgungsschalter am konkreten Bauteil
-   pruefen: Sensor-VCC zwischen Messungen aus, waehrend der Messung etwa 3,3 V.
+6. Auf 60 Minuten zurueckstellen. GPIO-Versorgung pruefen: Sensor-VCC zwischen
+   Messungen LOW, waehrend der Messung HIGH; Spannung unter Last messen.
 7. Ohne PC-USB-Host nach mehreren Minuten Ruhe BOOT und Fernbedienung pruefen;
    danach den realen mittleren Strom messen.
 
