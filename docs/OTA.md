@@ -50,6 +50,11 @@ einen konfigurierten OTA-Provider-Ordner. Die Serverversion und der passende
 Importpfad muessen vor dem ersten Funkupdate an der konkreten Installation
 geprueft werden; nicht mit dem allgemeinen www-Ordner gleichsetzen.
 
+Die aktuelle offizielle Home-Assistant-App richtet bei aktiviertem
+enable_test_net_dcl den OTA-Provider-Ordner **/config/updates innerhalb der App**
+automatisch ein. Dieser Pfad bezeichnet deren eigenen Konfigurationsordner,
+nicht den Home-Assistant-Core-Konfigurationsordner.
+
 Fuer einen selbst betriebenen Matter.js-Server:
 
 ```sh
@@ -66,9 +71,16 @@ Quellen:
 
 - [Matter Server: eigene OTA-Dateien](https://github.com/matter-js/matterjs-server#importing-custom-ota-firmware-files)
 - [Matter-Server-App: Konfiguration](https://github.com/home-assistant/apps/blob/master/matter_server/DOCS.md)
+- [Matter-Server-App: Startskript](https://github.com/home-assistant/app-matter-server/blob/main/matter_server/rootfs/etc/s6-overlay/s6-rc.d/matter-server/run)
 - [SDK: OTA-Requestor](https://github.com/espressif/esp-matter/blob/d3aa1b96b9357b208f15cc12d1864dc124414c6b/components/esp_matter/esp_matter_ota.cpp)
 
 ## Stromsparen und Abnahme
+
+Build 41726895662 von Commit c3e3f9e ist erfolgreich. 18 Python-Tests, die
+C++-Hostpruefung und die PowerShell-Flashtests sind bestanden. Am heruntergeladenen
+Paket wurden Pruefsummen, OTA-Header/Payload/Digest, alle drei Namen und die zum
+0.3.1-Paket bytegleiche Partitionstabelle geprueft. Anwendung: 1544224 Bytes,
+OTA-Datei: 1544314 Bytes. Das ist noch kein Nachweis einer Funkuebertragung.
 
 Waehrend Download und Anwenden sperrt die Firmware automatischen Light-sleep.
 Nach Downloadabschluss, Abbruch oder Fehler wird die Sperre freigegeben.

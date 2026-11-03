@@ -50,7 +50,13 @@ sind noch nicht geprueft.
 Das alte Board startete im Vergleich nicht; ein konkreter Hardwaredefekt ist
 nicht bewiesen. Der gepruefte Build:
 [0.3.1-soil-gpio auf GitHub Actions](https://github.com/OliverDoMS/esp-matter-over-thread/actions/runs/41654752377).
-Das aktuelle lokal heruntergeladene Bodenfeuchtepaket liegt in `dist/soil-gpio`.
+Das lokal heruntergeladene GPIO-Paket 0.3.1 liegt in `dist/soil-gpio`.
+0.4.0-soil-ota wurde ebenfalls erfolgreich gebaut und heruntergeladen:
+[OTA-Build auf GitHub Actions](https://github.com/OliverDoMS/esp-matter-over-thread/actions/runs/41726895662).
+Das neue Paket liegt in `dist/soil-ota`. SHA-256, Matter-Header und Payload,
+Geraetenamen sowie die unveraenderte Partitionstabelle wurden lokal geprueft.
+Die Anwendung belegt 1544224 Bytes; pro Slot bleiben etwa 21 % frei.
+Installation und Funkuebertragung von 0.4.0 sind am Board noch nicht abgenommen.
 Die alten lokalen Pakete `dist-usbdiag` und `dist-lowpower` enthalten weiterhin
 die bisherigen Versionen. Neue Builds ersetzen diese Diagnosepakete nicht.
 
