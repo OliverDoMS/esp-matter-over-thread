@@ -9,7 +9,7 @@ menu "DoNetIoT base system"
 
     config BASE_NODE_LABEL
         string "Matter node label (maximum 32 bytes)"
-        default "DoNetIoT H2 Base"
+        default "DoNetIoT Bodenfeuchte"
 
     config BASE_BUTTON_GPIO
         int "Service button GPIO (active low)"
@@ -28,8 +28,28 @@ menu "DoNetIoT base system"
 
     config BASE_TEST_CONTACT
         bool "Create a virtual contact sensor for initial commissioning tests"
-        default y
+        depends on !BASE_SOIL_MOISTURE
+        default n
         help
             A short button press toggles this TEST contact. No physical sensor
             is read. Add real sensor endpoints in sensors.cpp in later variants.
+
+    config BASE_SOIL_MOISTURE
+        bool "Analog capacitive soil moisture sensor"
+        default y
+        help
+            VCC to 3V3, GND to GND, AOUT to the selected ADC GPIO.
+            Calibrate dry and wet using BOOT before publishing percentages.
+
+    config BASE_SOIL_ADC_GPIO
+        int "Soil sensor ADC GPIO (H2 ADC1)"
+        depends on BASE_SOIL_MOISTURE
+        range 1 5
+        default 4
+
+    config BASE_SOIL_INTERVAL_SECONDS
+        int "Soil measurement interval (seconds)"
+        depends on BASE_SOIL_MOISTURE
+        range 10 86400
+        default 900
 endmenu

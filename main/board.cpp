@@ -24,7 +24,11 @@ void released(void *, void *)
 {
     const int64_t duration_ms = (esp_timer_get_time() - s_pressed_at) / 1000;
     // Actions execute only on release, so a reset hold does not first open pairing.
+#if CONFIG_BASE_SOIL_MOISTURE
+    s_callback(base::action_on_release(duration_ms, true));
+#else
     s_callback(base::action_on_release(duration_ms));
+#endif
 }
 
 esp_err_t disable_leds()

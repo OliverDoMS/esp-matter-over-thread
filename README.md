@@ -5,29 +5,35 @@ ESP32-H2 Super Mini (4 MB Flash), externe geregelte 3,3-V-Versorgung.
 
 ## Aktueller Stand
 
-Version 0.1.3-gpiowake aktiviert automatischen Light-sleep mit GPIO-Wakeup und
-laesst die Peripherie dabei versorgt. Die vorherige Version 0.1.2-lowpower reagierte
-am Testboard nach zwei Minuten Ruhe nicht mehr auf den Testkontakt. Mit der
-Diagnoseversion 0.1.1-usbdiag wurden am Testboard Matter-Kopplung mit Home Assistant,
-Kontaktwechsel per BOOT sowie Wiederanlauf nach RST und Stromunterbrechung bestaetigt.
-Sleep-/Wake-Verhalten und Stromverbrauch der Low-power-Version sind noch am Board
-zu pruefen. Der Workflow erzeugt nach erfolgreichem Build ein Flash-Paket.
-Im Repository liegen keine fertigen BIN-Dateien.
+Version 0.2.0-soil-usbdiag liest einen kapazitiven Bodenfeuchtesensor v1.2/v2.0
+an GPIO4. VCC wird fuer den ersten Test mit 3V3 verbunden, GND mit GND.
+Trocken-/Nasskalibrierung per BOOT wird in NVS gespeichert. Ohne Kalibrierung
+wird kein Prozentwert erfunden. Messung erfolgt beim Start, alle 15 Minuten
+und auf kurzen BOOT-Druck. Anleitung: [BODENFEUCHTE.md](docs/BODENFEUCHTE.md).
 
-Enthalten sind Thread Sleepy End Device, Matter Short Idle Time ICD, automatischer
-Light-sleep und ein virtueller Kontakt zum Testen der Verbindung. Keine WLAN-Verbindung,
-keine Messwertsimulation fuer Temperatur oder Batterie, kein periodischer Anwendungstask.
-Matter und Thread duerfen fuer ihre Protokollaufgaben selbststaendig aufwachen.
+Der neue Sensorcode muss mit dem Firmware-Build und am Board verifiziert werden.
+Die Basis 0.1.1-usbdiag wurde am neuen H2 (USB-Seriennummer endet DA:89) erfolgreich
+mit Home Assistant gekoppelt; der virtuelle Kontakt reagiert auf BOOT. Das alte
+Board startete im Vergleich nicht. Ein konkreter Hardwaredefekt ist nicht bewiesen.
+Die alten lokalen Pakete `dist-usbdiag` und `dist-lowpower` enthalten weiterhin
+die bisherigen Versionen. Neue Builds ersetzen diese Diagnosepakete nicht.
+
+Enthalten sind Thread Sleepy End Device, Matter Short Idle Time ICD und eine reale
+ADC-Messung. Fuer die Sensorinbetriebnahme ist automatischer Light-sleep deaktiviert.
+Der Sensortask wartet zwischen Messungen; ADC-Abtastung blockiert den Matter-Loop
+nicht. Es gibt keine WLAN-Verbindung und keine simulierten Messwerte.
 
 | BOOT-Taste nach dem Start | Funktion beim Loslassen |
 |---|---|
-| Unter 1 Sekunde | Aufwecken und virtuellen Testkontakt umschalten |
-| 1 bis unter 3 Sekunden | Nur Aufwecken |
-| 3 bis unter 10 Sekunden | Anlernfenster fuer 5 Minuten oeffnen |
+| Unter 1 Sekunde | Bodenfeuchte jetzt messen |
+| 1 bis unter 3 Sekunden | TROCKEN / 0 % kalibrieren |
+| 3 bis unter 6 Sekunden | Anlernfenster fuer 5 Minuten oeffnen |
+| 6 bis unter 10 Sekunden | NASS / 100 % kalibrieren |
 | Ab 10 Sekunden | Werksreset, Kopplung und Thread-Konfiguration loeschen |
 
-Der Testkontakt startet nach einem Neustart als geschlossen. Er ist kein echter
-Hall-/Fenstersensor und wird nicht bei jedem Tastendruck in Flash gespeichert.
+Die Bodenfeuchte wird als relativer Zweipunktindex ueber einen Matter-Humidity-
+Endpunkt uebertragen; Home Assistant kann ihn zunaechst als Luftfeuchte anzeigen.
+Die Firmware misst keine Luftfeuchte und keinen volumetrischen Wassergehalt.
 Die BOOT-Taste beim Einschalten/Reset fuehrt stattdessen in den ROM-Downloadmodus.
 
 ## Firmware erzeugen
@@ -69,14 +75,16 @@ anschliessend getrennt aufgebaut; siehe [docs/HARDWARE.md](docs/HARDWARE.md).
 |---|---|
 | `main/app_main.cpp` | NVS, Matter, Thread, Energieverwaltung, Anlernen und Reset |
 | `main/board.cpp` | BOOT-Taste und Abschalten der steuerbaren Board-LEDs |
-| `main/sensors.cpp` | Sensor-Endpunkte und Publizieren der Werte im Matter-Kontext |
+| `main/sensors.cpp` | Sensor-Endpunkte |
+| `main/soil_moisture.cpp` | ADC, Kalibrierung, Messintervall und Matter-Publizieren |
+| `main/soil_math.h` | Gepruefte Zweipunktumrechnung |
 | `main/Kconfig.projbuild` | Boardoptionen und Testkontakt |
 | `sdkconfig.defaults` | Netzwerk-, ICD- und Schlafkonfiguration |
 
 Neue Varianten ergaenzen passende Endpunkte und Treiber in der Sensorschicht.
 I2C-Pins und Sensorversorgung werden erst mit der konkreten Erweiterung festgelegt.
-Batteriespannung, Prozentanzeige, reale Hall-Eingaenge, Temperatur, Feuchte und
-Helligkeit sind noch nicht implementiert. Ein Spannungsteiler darf nicht einfach
+Batteriespannung, Batterie-Prozentanzeige, reale Hall-Eingaenge, Temperatur,
+Luftfeuchte und Helligkeit sind noch nicht implementiert. Ein Spannungsteiler darf nicht einfach
 an die konstant geregelte 3,3-V-Schiene angeschlossen werden, wenn die Batterie
 gemessen werden soll. Updates per Matter OTA sind in dieser Version deaktiviert;
 die Partitionstabelle reserviert bereits einen zweiten Anwendungsslot.

@@ -1,5 +1,18 @@
 # Firmware flashen und testen
 
+## Aktuelles Bodenfeuchteprofil 0.2.0-soil-usbdiag
+
+Das aktuelle Buildprofil ersetzt den Testkontakt durch einen analogen
+Bodenfeuchtesensor. Verdrahtung, Kalibrierung und die geaenderten Tastenzeiten
+stehen in [BODENFEUCHTE.md](BODENFEUCHTE.md). Automatischer Light-sleep bleibt fuer
+diesen ersten Sensor-Funktionstest deaktiviert. Die unten beschriebenen
+Low-power-Tests gehoeren zu den vorherigen Basisprofilen.
+
+Weil sich der Endpunkttyp von Kontakt zu Feuchte aendert, das bisherige Geraet
+in den verbundenen Controllern entfernen, das neue Factory-Paket installieren
+und neu anlernen. Ein Factory-Flash setzt Kopplungs- und Kalibrierdaten zurueck.
+Alte lokale Pakete `dist-usbdiag`/`dist-lowpower` enthalten keinen Bodenfeuchtecode.
+
 ## Voraussetzungen
 
 - ESP32-H2 Super Mini mit 4 MB Flash und USB-Datenkabel.

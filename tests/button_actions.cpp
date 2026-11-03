@@ -1,4 +1,5 @@
 #include "button_actions.h"
+#include "soil_math.h"
 using base::action_on_release;
 using base::ButtonAction;
 static_assert(action_on_release(0) == ButtonAction::TestContact);
@@ -9,3 +10,23 @@ static_assert(action_on_release(3000) == ButtonAction::Commission);
 static_assert(action_on_release(9999) == ButtonAction::Commission);
 static_assert(action_on_release(10000) == ButtonAction::FactoryReset);
 static_assert(action_on_release(60000) == ButtonAction::FactoryReset);
+static_assert(action_on_release(999, true) == ButtonAction::TestContact);
+static_assert(action_on_release(1000, true) == ButtonAction::CalibrateDry);
+static_assert(action_on_release(2999, true) == ButtonAction::CalibrateDry);
+static_assert(action_on_release(3000, true) == ButtonAction::Commission);
+static_assert(action_on_release(5999, true) == ButtonAction::Commission);
+static_assert(action_on_release(6000, true) == ButtonAction::CalibrateWet);
+static_assert(action_on_release(9999, true) == ButtonAction::CalibrateWet);
+static_assert(action_on_release(10000, true) == ButtonAction::FactoryReset);
+using base::soil::moisture_hundredths;
+static_assert(moisture_hundredths(3000, 3000, 1000) == 0);
+static_assert(moisture_hundredths(1000, 3000, 1000) == 10000);
+static_assert(moisture_hundredths(2000, 3000, 1000) == 5000);
+static_assert(moisture_hundredths(3500, 3000, 1000) == 0);
+static_assert(moisture_hundredths(500, 3000, 1000) == 10000);
+static_assert(moisture_hundredths(0, 3000, 1000) == -1);
+static_assert(moisture_hundredths(4095, 3000, 1000) == -1);
+static_assert(moisture_hundredths(2000, -1, -1) == -1);
+static_assert(moisture_hundredths(2000, 1000, 3000) == -1);
+static_assert(moisture_hundredths(2000, 2100, 2050) == -1);
+static_assert(moisture_hundredths(2000, INT32_MAX, INT32_MIN) == -1);

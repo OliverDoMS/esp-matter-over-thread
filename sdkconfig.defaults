@@ -56,8 +56,12 @@ CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
 # Keep the native USB console reachable while a PC is connected.
 # Automatic Light-sleep remains available after disconnecting the USB host.
 CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION=y
-# Normal low-power profile; retain the diagnostic switch for troubleshooting.
-CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=n
+# Soil sensor bring-up: use the verified no-sleep diagnostic mode first.
+CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=y
+CONFIG_BASE_SOIL_MOISTURE=y
+CONFIG_BASE_TEST_CONTACT=n
+CONFIG_BASE_SOIL_ADC_GPIO=4
+CONFIG_BASE_SOIL_INTERVAL_SECONDS=900
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=4
 CONFIG_ENABLE_OTA_REQUESTOR=n

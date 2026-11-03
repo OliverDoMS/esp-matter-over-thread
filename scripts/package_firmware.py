@@ -19,7 +19,9 @@ REQUIRED_CONFIG = {
     "CONFIG_FREERTOS_USE_TICKLESS_IDLE": "y",
     "CONFIG_IEEE802154_SLEEP_ENABLE": "y",
     "CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION": "y",
-    "CONFIG_BASE_DIAGNOSTIC_NO_SLEEP": "n",
+    "CONFIG_BASE_DIAGNOSTIC_NO_SLEEP": "y",
+    "CONFIG_BASE_SOIL_MOISTURE": "y",
+    "CONFIG_BASE_TEST_CONTACT": "n",
     "CONFIG_PM_POWER_DOWN_PERIPHERAL_IN_LIGHT_SLEEP": "n",
 }
 
@@ -108,6 +110,7 @@ def package(build: Path, output: Path) -> None:
     root = Path(__file__).resolve().parents[1]
     shutil.copyfile(root / "scripts" / "flash.ps1", output / "flash.ps1")
     shutil.copyfile(root / "docs" / "FLASHEN.md", output / "FLASHEN.md")
+    shutil.copyfile(root / "docs" / "BODENFEUCHTE.md", output / "BODENFEUCHTE.md")
     shutil.copyfile(root / "versions.env", output / "versions.env")
     for optional in [root / "dependencies.lock", root / "sdkconfig"]:
         if optional.is_file():
