@@ -36,4 +36,5 @@ set -u
 cd "$project_dir"
 python3 -m unittest discover -s tests -v
 idf.py -DIDF_TARGET=esp32h2 build
+python3 "$ESP_MATTER_PATH/connectedhomeip/connectedhomeip/src/app/ota_image_tool.py" show build/esp_matter_base-ota.bin
 python3 scripts/package_firmware.py --build-dir build --output-dir dist

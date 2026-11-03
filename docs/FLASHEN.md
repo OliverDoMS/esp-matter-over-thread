@@ -1,5 +1,12 @@
 # Firmware flashen und testen
 
+## Matter OTA und Geraetenamen ab 0.4.0
+
+Das Profil meldet MoistureSensor / DoNetIoT / ESP32-H2 und aktiviert Matter OTA.
+Einmalig per USB als Anwendungsupdate installieren. Danach verwendet man
+MoistureSensor.ota mit einem Matter-OTA-Provider. Ablauf und Grenzen:
+[OTA.md](OTA.md). Die vorhandene Partitionstabelle bleibt unveraendert.
+
 ## Direkte Sensorversorgung mit 0.3.1-soil-gpio
 
 0.3.1 versorgt den Sensor direkt aus GPIO1 (HIGH=an, LOW=aus), mit hoechster
@@ -163,7 +170,9 @@ verwendet wird, kann die Anwendung ohne Factory-Image geschrieben werden:
 .\flash.ps1 -Port COM4 -ApplicationOnly
 ```
 
-Diese Version verwendet fest `ota_0` bei `0x20000`; Matter OTA ist deaktiviert.
-`ApplicationOnly` ist nicht fuer fremde Firmware, andere Partitionstabellen oder
-ein spaeteres System mit aktivem `ota_1` vorgesehen. Einen Werksreset bei
-inkompatiblen Datenmodell-Aenderungen separat einplanen.
+Bis 0.3.1 wurde fest `ota_0` bei `0x20000` verwendet. Das neue Skript prueft bei
+OTA-Paketen die vorhandene Partitionstabelle und verlangt eine noch geloeschte
+OTA-Bootauswahl, bevor es diesen festen Slot beschreibt. Nach einem OTA-Update
+werden USB-Anwendungsupdates abgelehnt; dann den Matter-OTA-Weg verwenden.
+`ApplicationOnly` ist nicht fuer fremde Firmware oder andere Partitionstabellen
+vorgesehen. Einen Werksreset bei inkompatiblen Datenmodell-Aenderungen separat einplanen.

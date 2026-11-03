@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import struct
 import subprocess
 import sys
 
@@ -27,7 +28,43 @@ REQUIRED_CONFIG = {
     "CONFIG_BASE_SOIL_POWER_ACTIVE_LOW": "n",
     "CONFIG_BASE_TEST_CONTACT": "n",
     "CONFIG_PM_POWER_DOWN_PERIPHERAL_IN_LIGHT_SLEEP": "n",
+    "CONFIG_ENABLE_OTA_REQUESTOR": "y",
+    "CONFIG_CHIP_OTA_IMAGE_BUILD": "y",
+    "CONFIG_OTA_AUTO_REBOOT_ON_APPLY": "y",
 }
+
+OTA_SLOT_BYTES = 0x1E0000
+
+
+def validate_ota_outputs(build: Path) -> tuple[Path, Path]:
+    table = build / "partition_table" / "partition-table.bin"
+    entries = {}
+    raw = table.read_bytes()
+    for offset in range(0, len(raw) - 31, 32):
+        magic, kind, subtype, address, size, label, _ = struct.unpack_from("<HBBII16sI", raw, offset)
+        if magic != 0x50AA:
+            break
+        entries[label.rstrip(b"\0").decode()] = (kind, subtype, address, size)
+    required = {
+        "nvs": (1, 2, 0x10000, 0xC000),
+        "otadata": (1, 0, 0x1D000, 0x2000),
+        "ota_0": (0, 0x10, 0x20000, OTA_SLOT_BYTES),
+        "ota_1": (0, 0x11, 0x200000, OTA_SLOT_BYTES),
+    }
+    if any(entries.get(name) != value for name, value in required.items()):
+        raise ValueError("OTA partition layout mismatch; refusing unsafe package")
+    app = (build / "esp_matter_base.bin").read_bytes()
+    if len(app) > OTA_SLOT_BYTES:
+        raise ValueError("Application exceeds OTA slot size")
+    ota = build / "esp_matter_base-ota.bin"
+    content = ota.read_bytes()
+    if len(content) < 16:
+        raise ValueError("Missing or truncated Matter OTA header")
+    magic, total_size, header_size = struct.unpack_from("<IQI", content)
+    if (magic != 0x1BEEF11E or total_size != len(content)
+            or header_size == 0 or content[16 + header_size:] != app):
+        raise ValueError("Matter OTA header or payload mismatch")
+    return table, ota
 
 
 def validate_config(path: Path) -> None:
@@ -88,6 +125,7 @@ def package(build: Path, output: Path) -> None:
     else:
         validate_config(build.parent / "sdkconfig")
     data, files = load_flash_layout(build)
+    table, ota = validate_ota_outputs(build)
     output.mkdir(parents=True, exist_ok=True)
     settings = data["flash_settings"]
     factory = output / "factory.bin"
@@ -102,13 +140,19 @@ def package(build: Path, output: Path) -> None:
         raise ValueError("esptool did not produce a factory image")
     app = output / "esp_matter_base.bin"
     shutil.copyfile(build / data["app"]["file"], app)
+    shutil.copyfile(table, output / "partition-table.bin")
+    shutil.copyfile(ota, output / "MoistureSensor.ota")
     metadata = json.loads((build / "project_description.json").read_text())
     manifest = {
         "chip": "esp32h2", "flash_bytes": FLASH_BYTES,
         "version": metadata["project_version"],
         "factory_offset": "0x0", "app_offset": data["app"]["offset"],
         "flash_settings": settings,
-        "files": {factory.name: describe(factory), app.name: describe(app)},
+        "ota_supported": True,
+        "partition_table_offset": "0xc000",
+        "ota_data_offset": "0x1d000", "ota_data_bytes": 8192,
+        "files": {name: describe(output / name) for name in
+                  (factory.name, app.name, "partition-table.bin", "MoistureSensor.ota")},
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     root = Path(__file__).resolve().parents[1]
@@ -116,6 +160,7 @@ def package(build: Path, output: Path) -> None:
     shutil.copyfile(root / "docs" / "FLASHEN.md", output / "FLASHEN.md")
     shutil.copyfile(root / "docs" / "BODENFEUCHTE.md", output / "BODENFEUCHTE.md")
     shutil.copyfile(root / "docs" / "ENERGIESPAREN.md", output / "ENERGIESPAREN.md")
+    shutil.copyfile(root / "docs" / "OTA.md", output / "OTA.md")
     shutil.copyfile(root / "versions.env", output / "versions.env")
     for optional in [root / "dependencies.lock", root / "sdkconfig"]:
         if optional.is_file():

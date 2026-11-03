@@ -11,6 +11,7 @@
 #include <esp_pm.h>
 #include <esp_system.h>
 #include <esp_app_desc.h>
+#include <esp_ota_ops.h>
 #include <nvs_flash.h>
 #include <esp_matter.h>
 #include <app/icd/server/ICDNotifier.h>
@@ -25,6 +26,30 @@
 
 namespace {
 constexpr char TAG[] = "base";
+#if CONFIG_ENABLE_OTA_REQUESTOR
+esp_pm_lock_handle_t s_ota_lock = nullptr;
+bool s_ota_awake = false;
+
+void update_ota_power(chip::DeviceLayer::OtaState state)
+{
+    using namespace chip::DeviceLayer;
+    switch (state) {
+    case kOtaDownloadInProgress:
+    case kOtaApplyInProgress:
+        if (!s_ota_awake && esp_pm_lock_acquire(s_ota_lock) == ESP_OK) s_ota_awake = true;
+        break;
+    case kOtaDownloadFailed:
+    case kOtaDownloadComplete:
+    case kOtaDownloadAborted:
+    case kOtaApplyFailed:
+        if (s_ota_awake && esp_pm_lock_release(s_ota_lock) == ESP_OK) s_ota_awake = false;
+        break;
+    default:
+        break;
+    }
+    ESP_LOGI(TAG, "Matter OTA state=%d; sleep lock=%d", static_cast<int>(state), s_ota_awake);
+}
+#endif
 #if CONFIG_BASE_DIAGNOSTIC_NO_SLEEP
 constexpr bool kDiagnosticNoSleep = true;
 #else
@@ -88,6 +113,11 @@ void device_event(const ChipDeviceEvent *event, intptr_t)
 {
     using namespace chip::DeviceLayer;
     switch (event->Type) {
+#if CONFIG_ENABLE_OTA_REQUESTOR
+    case DeviceEventType::kOtaStateChanged:
+        update_ota_power(event->OtaStateChanged.newState);
+        break;
+#endif
     case DeviceEventType::kCommissioningComplete:
         ESP_LOGI(TAG, "Commissioning complete; automatic Light-sleep %s; ICD enabled",
                  kDiagnosticNoSleep ? "disabled (diagnostic)" : "enabled");
@@ -150,6 +180,13 @@ extern "C" void app_main()
     pm.min_freq_mhz = 32;
     pm.light_sleep_enable = !kDiagnosticNoSleep;
     ESP_ERROR_CHECK(esp_pm_configure(&pm));
+#if CONFIG_ENABLE_OTA_REQUESTOR
+    ESP_ERROR_CHECK(esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "matter_ota", &s_ota_lock));
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    ESP_LOGI(TAG, "Matter OTA enabled; running partition=%s offset=0x%lx size=0x%lx",
+             running->label, static_cast<unsigned long>(running->address),
+             static_cast<unsigned long>(running->size));
+#endif
     if (kDiagnosticNoSleep) {
         ESP_LOGW(TAG, "DIAGNOSTIC: automatic Light-sleep DISABLED; not for battery measurements");
     } else {

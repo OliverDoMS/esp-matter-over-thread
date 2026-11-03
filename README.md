@@ -5,7 +5,12 @@ ESP32-H2 Super Mini (4 MB Flash), externe geregelte 3,3-V-Versorgung.
 
 ## Aktueller Stand
 
-Version 0.3.1-soil-gpio liest einen kapazitiven Bodenfeuchtesensor v1.2/v2.0
+Version 0.4.0-soil-ota meldet das Produkt `MoistureSensor`, den Hersteller
+`DoNetIoT` und die Hardware `ESP32-H2` an Matter. Die numerischen Produkt- und
+Hersteller-IDs bleiben gleich. Nach einem Update gegebenenfalls in Home Assistant
+`Geraet neu abfragen` ausfuehren, damit die Angaben aktualisiert werden.
+
+Die Firmware liest einen kapazitiven Bodenfeuchtesensor v1.2/v2.0
 an GPIO4. Sensor-VCC kommt direkt an GPIO1: HIGH waehrend der Messung,
 LOW dazwischen. GND bleibt an GND. VCC erst nach Installation von 0.3.1 umstecken;
 0.3.0 verwendet noch die umgekehrte Polaritaet fuer einen externen Schalter.
@@ -117,8 +122,9 @@ I2C-Pins und Sensorversorgung werden erst mit der konkreten Erweiterung festgele
 Batteriespannung, Batterie-Prozentanzeige, reale Hall-Eingaenge, Temperatur,
 Luftfeuchte und Helligkeit sind noch nicht implementiert. Ein Spannungsteiler darf nicht einfach
 an die konstant geregelte 3,3-V-Schiene angeschlossen werden, wenn die Batterie
-gemessen werden soll. Updates per Matter OTA sind in dieser Version deaktiviert;
-die Partitionstabelle reserviert bereits einen zweiten Anwendungsslot.
+gemessen werden soll. Ab 0.4.0 ist Matter OTA aktiviert; der Build erzeugt
+`MoistureSensor.ota`. Die Erstaktivierung erfolgt einmalig per USB, danach
+benoetigt Home Assistant eine lokale OTA-Updatequelle: [OTA.md](docs/OTA.md).
 
 ## Pruefungen
 

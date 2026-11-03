@@ -1,6 +1,7 @@
 """Exercise layout rejection and packaging without a connected device or SDK."""
 import importlib.util
 import json
+import struct
 from pathlib import Path
 import tempfile
 import unittest
@@ -20,6 +21,17 @@ class PackageTests(unittest.TestCase):
         self.build.mkdir()
         (self.build / "bootloader.bin").write_bytes(b"test-bootloader")
         (self.build / "esp_matter_base.bin").write_bytes(b"test-app")
+        (self.build / "partition_table").mkdir()
+        entries = [("nvs", 1, 2, 0x10000, 0xC000),
+                   ("otadata", 1, 0, 0x1D000, 0x2000),
+                   ("ota_0", 0, 0x10, 0x20000, 0x1E0000),
+                   ("ota_1", 0, 0x11, 0x200000, 0x1E0000)]
+        table = b"".join(struct.pack("<HBBII16sI", 0x50AA, kind, subtype, address, size,
+                                    name.encode(), 0) for name, kind, subtype, address, size in entries)
+        (self.build / "partition_table" / "partition-table.bin").write_bytes(table)
+        # Test-only header fixture; the SDK creates real TLV headers during builds.
+        self.ota = self.build / "esp_matter_base-ota.bin"
+        self.ota.write_bytes(struct.pack("<IQI", 0x1BEEF11E, 25, 1) + b"x" + b"test-app")
         self.layout = {
             "extra_esptool_args": {"chip": "esp32h2"},
             "flash_files": {"0x0": "bootloader.bin", "0x20000": "esp_matter_base.bin"},
@@ -73,6 +85,27 @@ class PackageTests(unittest.TestCase):
         self.layout["app"]["offset"] = "0x10000"
         self.rejected("Unexpected application offset")
 
+    def test_ota_wrong_payload_rejected(self):
+        self.ota.write_bytes(self.ota.read_bytes()[:-1] + b"!")
+        with self.assertRaisesRegex(ValueError, "payload mismatch"):
+            pkg.validate_ota_outputs(self.build)
+
+    def test_ota_truncated_header_rejected(self):
+        self.ota.write_bytes(b"bad")
+        with self.assertRaisesRegex(ValueError, "truncated"):
+            pkg.validate_ota_outputs(self.build)
+
+    def test_ota_partition_change_rejected(self):
+        table = self.build / "partition_table" / "partition-table.bin"
+        table.write_bytes(table.read_bytes()[:96])  # Missing second slot.
+        with self.assertRaisesRegex(ValueError, "partition layout"):
+            pkg.validate_ota_outputs(self.build)
+
+    def test_ota_slot_overflow_rejected(self):
+        (self.build / "esp_matter_base.bin").write_bytes(b"x" * (pkg.OTA_SLOT_BYTES + 1))
+        with self.assertRaisesRegex(ValueError, "exceeds OTA slot"):
+            pkg.validate_ota_outputs(self.build)
+
     def test_real_package_manifest_and_checksums(self):
         output = Path(self.temp.name) / "dist"
 
@@ -91,6 +124,9 @@ class PackageTests(unittest.TestCase):
         self.assertEqual((output / "esp_matter_base.bin").read_bytes(), b"test-app")
         self.assertTrue((output / "flash.ps1").is_file())
         self.assertTrue((output / "FLASHEN.md").is_file())
+        self.assertTrue(manifest["ota_supported"])
+        self.assertEqual((output / "MoistureSensor.ota").read_bytes(), self.ota.read_bytes())
+        self.assertEqual(manifest["files"]["MoistureSensor.ota"], pkg.describe(output / "MoistureSensor.ota"))
 
     def test_sleep_disabled_blocks_packaging_before_esptool(self):
         config_file = self.build / "config" / "sdkconfig.json"
