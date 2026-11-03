@@ -1,7 +1,8 @@
 # Bodenfeuchte mit ESP32-H2 und kapazitivem Sensor v1.2/v2.0
 
-Version 0.2.0-soil-usbdiag ersetzt den virtuellen Kontakt durch eine echte
-ADC-Messung. Der Sensor bleibt fuer den ersten Funktionstest dauerhaft versorgt.
+Seit Version 0.2.0-soil-usbdiag ersetzt eine echte ADC-Messung den virtuellen
+Kontakt. Version 0.2.1-soil-led ergaenzt die visuelle Tastenauswahl. Die
+Sensorversorgung bleibt fuer den ersten Funktionstest dauerhaft eingeschaltet.
 Automatischer Light-sleep ist wie im bewaehrten USB-Diagnoseprofil deaktiviert.
 Diese Version ist noch nicht fuer Batterielaufzeitmessungen vorgesehen.
 
@@ -23,6 +24,18 @@ Optional 100 nF von GPIO4 nach GND, nahe am Board, zur ADC-Filterung.
 
 ## Flashen und Kopplung
 
+### Update von 0.2.0 auf 0.2.1
+
+Nur die Anwendung mit dem neuen Paket schreiben:
+`./flash.ps1 -Port COM26 -ApplicationOnly -Baud 115200` (Port anpassen).
+Partitionstabelle und Matter-Endpunkttyp sind unveraendert; Kopplung und
+Kalibrierung bleiben dabei erhalten. Kein Factory-Image und kein `-EraseAll`
+fuer dieses Bedienungsupdate verwenden. Danach RST kurz druecken und
+`Firmware 0.2.1-soil-led` im Log pruefen. Die neue LED-Bedienung ist am Board
+noch separat zu bestaetigen.
+
+### Erstinstallation oder Wechsel vom Testkontakt
+
 Das neue Datenmodell ist ein Feuchtesensor statt Kontakt. Das Geraet in den
 bisherigen Controllern entfernen und mit dem neuen Firmwarepaket neu anlernen.
 Ein erneutes Factory-Flash setzt vorhandene Kopplungsdaten zurueck.
@@ -32,20 +45,28 @@ Flash- und Kopplungsablauf: FLASHEN.md. Der Entwicklungs-Anlerncode bleibt
 
 ## Tasten und Kalibrierung
 
-Die Aktion erfolgt beim Loslassen; BOOT beim Reset nicht gedrueckt halten.
+Die blaue Board-LED an GPIO13 zeigt beim Halten die ausgewaehlte Aktion an.
+Erst beim Loslassen wird sie ausgefuehrt. BOOT beim Reset nicht gedrueckt halten.
+Die LED bleibt sonst aus. `BASE_BUTTON_LED_FEEDBACK` gilt fuer das dokumentierte
+Super-Mini-Layout; bei abweichender LED-Beschaltung deaktivieren.
 
-| BOOT halten | Funktion |
+| BOOT bedienen | Funktion |
 |---|---|
-| Unter 1 Sekunde | Sofort messen |
-| 1 bis unter 3 Sekunden | Aktuellen Messwert als TROCKEN / 0 % speichern |
-| 3 bis unter 6 Sekunden | Anlernfenster oeffnen |
-| 6 bis unter 10 Sekunden | Aktuellen Messwert als NASS / 100 % speichern |
-| Ab 10 Sekunden | Matter-Werksreset |
+| Einmal kurz druecken | Sofort messen |
+| Doppelklick (zweimal kurz, innerhalb ca. 400 ms) | Anlernfenster oeffnen |
+| Halten bis einmal Blinken, dann loslassen (ab ca. 2 s) | TROCKEN / 0 % speichern |
+| Weiterhalten bis zweimal Blinken, dann loslassen (ab ca. 5 s) | NASS / 100 % speichern |
+| Weiterhalten bis schnelles Blinken, dann loslassen (erst ab 10 s) | Matter-Werksreset |
+
+Fuer nass das erste einzelne Blinken ignorieren und weiter gedrueckt halten,
+bis der Doppelblink erscheint. Kein Anlernfenster liegt mehr zwischen den
+Kalibrierstufen. Loslassen zwischen einer und zwei Sekunden bewirkt nichts.
 
 1. Sensor in die gewuenschte trockene Referenz bringen (z.B. trockenes Substrat),
-   stabilisieren lassen, BOOT etwa 2 Sekunden halten und loslassen.
+   stabilisieren lassen, BOOT halten bis die LED einmal blinkt, dann loslassen.
 2. Sensor in die feuchte Referenz bringen (z.B. durchfeuchtetes Substrat),
-   stabilisieren lassen, BOOT etwa 7 Sekunden halten und loslassen.
+   stabilisieren lassen, BOOT ueber den Einzelblink hinaus halten bis die LED
+   zweimal blinkt, dann loslassen. Nicht bis zum schnellen Reset-Blinken halten.
 3. Im USB-Log beide Meldungen `Saved DRY calibration` und `Saved WET calibration`
    sowie plausible Rohwerte pruefen. Der Trockenwert muss mindestens 100
    ADC-Schritte ueber dem Nasswert liegen; andernfalls wird die zweite
@@ -87,7 +108,9 @@ Test und der automatische 15-Minuten-Messzyklus stehen noch aus.
 Diagnoseprotokoll lokal: `output/h2-recovery/soil-da89-20261103.log`
 (von Git ausgeschlossen).
 
-- Nach dem Start muss `Firmware 0.2.0-soil-usbdiag` im Log stehen.
+- Nach dem Start muss die erwartete Firmwareversion im Log stehen.
+- Bei 0.2.1 Einzelblink, Doppelblink, Doppelklick zum Anlernen und ausgebliebene
+  Reset-Aktion unter 10 Sekunden am Board pruefen.
 - Trocken-/Nassreferenzen kalibrieren und Zwischenwerte in Home Assistant pruefen.
 - RST und Stromunterbrechung pruefen: Kalibrierung und Kopplung bleiben erhalten.
 - Automatische Messung nach 15 Minuten pruefen.

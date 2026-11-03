@@ -98,7 +98,11 @@ void device_event(const ChipDeviceEvent *event, intptr_t)
         ESP_LOGI(TAG, "Commissioning window closed");
         break;
     case DeviceEventType::kFailSafeTimerExpired:
+#if CONFIG_BASE_SOIL_MOISTURE
+        ESP_LOGW(TAG, "Commissioning failed or timed out; double-click BOOT to retry");
+#else
         ESP_LOGW(TAG, "Commissioning failed or timed out; use BOOT 3-9 s to retry");
+#endif
         break;
     case DeviceEventType::kInterfaceIpAddressChanged:
         ESP_LOGI(TAG, "IPv6 interface address changed");
@@ -174,7 +178,7 @@ extern "C" void app_main()
     ESP_LOGI(TAG, "DoNetIoT H2 Base %s: Thread sleepy end device / SIT ICD",
              esp_app_get_description()->version);
 #if CONFIG_BASE_SOIL_MOISTURE
-    ESP_LOGI(TAG, "BOOT: <1 s measure; 1-3 s DRY; 3-6 s pairing; 6-10 s WET; >=10 s factory reset, on release");
+    ESP_LOGI(TAG, "BOOT: click=measure; double-click=pairing; hold for 1 blink=DRY, 2 blinks=WET, >=10 s rapid blinking=reset; release to confirm");
 #else
     ESP_LOGI(TAG, "BOOT: <1 s TEST contact; 3-9 s pairing; >=10 s factory reset, on release");
 #endif

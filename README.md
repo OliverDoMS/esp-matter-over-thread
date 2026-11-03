@@ -5,11 +5,18 @@ ESP32-H2 Super Mini (4 MB Flash), externe geregelte 3,3-V-Versorgung.
 
 ## Aktueller Stand
 
-Version 0.2.0-soil-usbdiag liest einen kapazitiven Bodenfeuchtesensor v1.2/v2.0
+Version 0.2.1-soil-led liest einen kapazitiven Bodenfeuchtesensor v1.2/v2.0
 an GPIO4. VCC wird fuer den ersten Test mit 3V3 verbunden, GND mit GND.
 Trocken-/Nasskalibrierung per BOOT wird in NVS gespeichert. Ohne Kalibrierung
 wird kein Prozentwert erfunden. Messung erfolgt beim Start, alle 15 Minuten
 und auf kurzen BOOT-Druck. Anleitung: [BODENFEUCHTE.md](docs/BODENFEUCHTE.md).
+
+Neu in 0.2.1: Auswahl waehrend des Haltens an der blauen GPIO13-LED erkennen,
+anstatt Sekunden abzuzaehlen. Beim ersten Blink loslassen fuer trocken,
+fuer nass weiterhalten bis zum Doppelblink. Ab 10 Sekunden zeigt schnelles
+Blinken den Matter-Werksreset an. Anlernen per Doppelklick. Diese neue
+LED-Bedienung muss noch am Board bestaetigt werden; die folgenden Hardwaretests
+wurden mit 0.2.0-soil-usbdiag durchgefuehrt.
 
 Am 03.11.2026 wurden Firmware-Build, Flashen und die reale Bodenfeuchtemessung am
 neuen H2 (USB-Seriennummer endet DA:89) bestaetigt. Trocken-/Nasskalibrierung,
@@ -31,11 +38,11 @@ nicht. Es gibt keine WLAN-Verbindung und keine simulierten Messwerte.
 
 | BOOT-Taste nach dem Start | Funktion beim Loslassen |
 |---|---|
-| Unter 1 Sekunde | Bodenfeuchte jetzt messen |
-| 1 bis unter 3 Sekunden | TROCKEN / 0 % kalibrieren |
-| 3 bis unter 6 Sekunden | Anlernfenster fuer 5 Minuten oeffnen |
-| 6 bis unter 10 Sekunden | NASS / 100 % kalibrieren |
-| Ab 10 Sekunden | Werksreset, Kopplung und Thread-Konfiguration loeschen |
+| Einmal kurz druecken | Bodenfeuchte jetzt messen |
+| Zweimal kurz hintereinander | Anlernfenster fuer 5 Minuten oeffnen |
+| Halten bis die LED einmal blinkt, dann loslassen (ab ca. 2 s) | TROCKEN / 0 % kalibrieren |
+| Weiterhalten bis die LED zweimal blinkt, dann loslassen (ab ca. 5 s) | NASS / 100 % kalibrieren |
+| Halten bis die LED schnell blinkt, dann loslassen (ab 10 s) | Werksreset, Kopplung und Thread-Konfiguration loeschen |
 
 Die Bodenfeuchte wird als relativer Zweipunktindex ueber einen Matter-Humidity-
 Endpunkt uebertragen; Home Assistant kann ihn zunaechst als Luftfeuchte anzeigen.

@@ -1,6 +1,12 @@
 # Firmware flashen und testen
 
-## Aktuelles Bodenfeuchteprofil 0.2.0-soil-usbdiag
+## Aktuelles Bodenfeuchteprofil 0.2.1-soil-led
+
+Beim Bedienungsupdate von 0.2.0 auf 0.2.1 nur die Anwendung schreiben
+(`-ApplicationOnly`), damit Kopplung und Kalibrierung erhalten bleiben.
+Die folgende Factory-Empfehlung betrifft den Wechsel vom Testkontakt und
+die Erstinstallation. Anlernen wird in 0.2.1 per BOOT-Doppelklick geoeffnet;
+die LED-Auswahl und Kalibrierung sind in BODENFEUCHTE.md beschrieben.
 
 Das aktuelle Buildprofil ersetzt den Testkontakt durch einen analogen
 Bodenfeuchtesensor. Verdrahtung, Kalibrierung und die geaenderten Tastenzeiten

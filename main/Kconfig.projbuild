@@ -47,6 +47,15 @@ menu "DoNetIoT base system"
         range 1 5
         default 4
 
+    config BASE_BUTTON_LED_FEEDBACK
+        bool "Show BOOT hold selection on the blue GPIO13 LED"
+        depends on BASE_SOIL_MOISTURE && BASE_DISABLE_SUPERMINI_LEDS
+        default y
+        help
+            While holding: one blink selects dry calibration, two blinks select
+            wet calibration, rapid blinking after 10 s selects Matter reset.
+            Release BOOT to execute. GPIO13 must not be used as the service button.
+
     config BASE_SOIL_INTERVAL_SECONDS
         int "Soil measurement interval (seconds)"
         depends on BASE_SOIL_MOISTURE
