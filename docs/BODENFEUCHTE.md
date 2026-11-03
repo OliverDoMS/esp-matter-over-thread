@@ -1,5 +1,11 @@
 # Bodenfeuchte mit ESP32-H2 und kapazitivem Sensor v1.2/v2.0
 
+Ab 0.3.0: [Home-Assistant-Konfiguration und Stromsparbetrieb](ENERGIESPAREN.md).
+Das Standard-Messintervall ist jetzt 60 Minuten und ueber Matter auswaehlbar.
+GPIO1 bereitet eine externe schaltbare Versorgung vor; ohne Schalter bleibt
+VCC fuer den Funktionstest an 3V3. Die folgenden Diagnoseabschnitte beziehen
+sich auf 0.2.x, wo automatischer Light-sleep noch deaktiviert war.
+
 Seit Version 0.2.0-soil-usbdiag ersetzt eine echte ADC-Messung den virtuellen
 Kontakt. Version 0.2.1-soil-led ergaenzt die visuelle Tastenauswahl. Die
 Sensorversorgung bleibt fuer den ersten Funktionstest dauerhaft eingeschaltet.

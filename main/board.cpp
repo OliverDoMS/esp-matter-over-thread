@@ -101,6 +101,9 @@ esp_err_t base::init_board(ButtonCallback callback)
     }
     s_callback = callback;
     ESP_RETURN_ON_ERROR(disable_leds(), TAG, "LED initialization failed");
+#if CONFIG_BASE_BUTTON_LED_FEEDBACK
+    ESP_RETURN_ON_ERROR(gpio_sleep_sel_dis(GPIO_NUM_13), TAG, "Keep LED state during Light-sleep failed");
+#endif
     button_config_t button_config{};
 #if CONFIG_BASE_SOIL_MOISTURE
     button_config.long_press_time = 1000; // Begin feedback callbacks before the first cue at 2 s.

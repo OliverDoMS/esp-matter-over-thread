@@ -1,5 +1,6 @@
 #include "sensors.h"
 #include "soil_moisture.h"
+#include "soil_controls.h"
 
 #include <esp_log.h>
 #include <sdkconfig.h>
@@ -30,6 +31,8 @@ esp_err_t base::sensors::create_endpoints(esp_matter::node_t *node)
     if (soil_endpoint == nullptr) return ESP_ERR_NO_MEM;
     s_soil_endpoint_id = esp_matter::endpoint::get_id(soil_endpoint);
     ESP_LOGI(TAG, "Relative soil moisture on endpoint %u (Matter humidity compatibility)", s_soil_endpoint_id);
+    const esp_err_t controls_error = base::controls::create_endpoints(node);
+    if (controls_error != ESP_OK) return controls_error;
 #endif
 #if CONFIG_BASE_TEST_CONTACT
     esp_matter::endpoint::contact_sensor::config_t config{};
@@ -48,7 +51,9 @@ esp_err_t base::sensors::create_endpoints(esp_matter::node_t *node)
 esp_err_t base::sensors::start()
 {
 #if CONFIG_BASE_SOIL_MOISTURE
-    return base::soil::start(s_soil_endpoint_id);
+    const esp_err_t err = base::soil::start(s_soil_endpoint_id);
+    if (err == ESP_OK) base::controls::start();
+    return err;
 #else
     return ESP_OK;
 #endif

@@ -56,9 +56,29 @@ menu "DoNetIoT base system"
             wet calibration, rapid blinking after 10 s selects Matter reset.
             Release BOOT to execute. GPIO13 must not be used as the service button.
 
-    config BASE_SOIL_INTERVAL_SECONDS
-        int "Soil measurement interval (seconds)"
+    config BASE_SOIL_SWITCHED_POWER
+        bool "Prepare GPIO control for an external sensor power switch"
         depends on BASE_SOIL_MOISTURE
-        range 10 86400
-        default 900
+        default y
+        help
+            GPIO drives a MOSFET gate or load-switch enable, never the sensor
+            supply directly. Without the external switch, VCC may stay at 3V3
+            for testing, but the sensor itself then remains permanently powered.
+
+    config BASE_SOIL_POWER_GPIO
+        int "External sensor power switch control GPIO"
+        depends on BASE_SOIL_SWITCHED_POWER
+        range 0 14
+        default 1
+
+    config BASE_SOIL_POWER_ACTIVE_LOW
+        bool "Power switch is active low (P-channel MOSFET gate)"
+        depends on BASE_SOIL_SWITCHED_POWER
+        default y
+
+    config BASE_SOIL_SETTLE_MS
+        int "Sensor settling time after power on (milliseconds)"
+        depends on BASE_SOIL_MOISTURE
+        range 50 5000
+        default 500
 endmenu

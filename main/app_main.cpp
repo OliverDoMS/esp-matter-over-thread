@@ -2,6 +2,7 @@
 #include "board.h"
 #include "sensors.h"
 #include "soil_moisture.h"
+#include "soil_controls.h"
 
 #include <cstdio>
 #include <cstring>
@@ -117,10 +118,10 @@ void device_event(const ChipDeviceEvent *event, intptr_t)
     }
 }
 
-esp_err_t attribute_changed(esp_matter::attribute::callback_type_t, uint16_t, uint32_t,
-                            uint32_t, esp_matter_attr_val_t *, void *)
+esp_err_t attribute_changed(esp_matter::attribute::callback_type_t type, uint16_t endpoint, uint32_t cluster,
+                            uint32_t attribute, esp_matter_attr_val_t *value, void *)
 {
-    return ESP_OK;
+    return base::controls::attribute_changed(type, endpoint, cluster, attribute, value);
 }
 
 esp_err_t identify(esp_matter::identification::callback_type_t, uint16_t endpoint_id,
@@ -142,6 +143,7 @@ extern "C" void app_main()
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err);
+    ESP_ERROR_CHECK(base::soil::load_settings());
 
     esp_pm_config_t pm{};
     pm.max_freq_mhz = CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ;

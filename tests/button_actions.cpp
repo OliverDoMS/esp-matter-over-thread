@@ -1,5 +1,6 @@
 #include "button_actions.h"
 #include "soil_math.h"
+#include "soil_settings.h"
 using base::action_on_release;
 using base::ButtonAction;
 static_assert(action_on_release(0) == ButtonAction::TestContact);
@@ -49,3 +50,10 @@ static_assert(moisture_hundredths(2000, -1, -1) == -1);
 static_assert(moisture_hundredths(2000, 1000, 3000) == -1);
 static_assert(moisture_hundredths(2000, 2100, 2050) == -1);
 static_assert(moisture_hundredths(2000, INT32_MAX, INT32_MIN) == -1);
+static_assert(base::soil::kDefaultIntervalMinutes == 60);
+static_assert(base::soil::interval_mode(60) == 5);
+static_assert(base::soil::interval_mode(1) == 0);
+static_assert(base::soil::interval_mode(1440) == 9);
+static_assert(base::soil::interval_mode(0) == -1);
+static_assert(base::soil::interval_mode(61) == -1);
+static_assert(base::soil::interval_mode(65535) == -1);

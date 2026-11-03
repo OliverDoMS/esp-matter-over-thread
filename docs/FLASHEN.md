@@ -1,5 +1,14 @@
 # Firmware flashen und testen
 
+## Konfiguration und Stromsparprofil 0.3.0-soil-config
+
+Das neue Profil ergaenzt zwei ModeSelect-Endpunkte fuer Home Assistant und
+aktiviert automatischen Light-sleep. Standardintervall 60 Minuten; Verdrahtung
+des optionalen externen Versorgungsschalters und Abnahme: ENERGIESPAREN.md.
+Ein Anwendungsupdate von 0.2.x erhaelt zunaechst NVS und Kopplung. Danach pruefen,
+ob der Controller die neuen Konfigurations-Endpunkte erkennt. Ein Factory-Flash
+setzt Kopplung und Kalibrierung zurueck und ist kein automatischer Update-Schritt.
+
 ## Aktuelles Bodenfeuchteprofil 0.2.1-soil-led
 
 Beim Bedienungsupdate von 0.2.0 auf 0.2.1 nur die Anwendung schreiben

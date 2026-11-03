@@ -5,25 +5,35 @@ ESP32-H2 Super Mini (4 MB Flash), externe geregelte 3,3-V-Versorgung.
 
 ## Aktueller Stand
 
-Version 0.2.1-soil-led liest einen kapazitiven Bodenfeuchtesensor v1.2/v2.0
-an GPIO4. VCC wird fuer den ersten Test mit 3V3 verbunden, GND mit GND.
+Version 0.3.0-soil-config liest einen kapazitiven Bodenfeuchtesensor v1.2/v2.0
+an GPIO4. Ein externer Versorgungsschalter kann ueber GPIO1 angesteuert werden.
 Trocken-/Nasskalibrierung per BOOT wird in NVS gespeichert. Ohne Kalibrierung
-wird kein Prozentwert erfunden. Messung erfolgt beim Start, alle 15 Minuten
+wird kein Prozentwert erfunden. Messung erfolgt beim Start, standardmaessig alle 60 Minuten
 und auf kurzen BOOT-Druck. Anleitung: [BODENFEUCHTE.md](docs/BODENFEUCHTE.md).
 
-Neu in 0.2.1: Auswahl waehrend des Haltens an der blauen GPIO13-LED erkennen,
+Die Home-Assistant-Geraeteseite erhaelt zwei Matter-Modusauswahlen:
+**Bodenfeuchte bedienen** (Jetzt messen, Trocken/Nass kalibrieren) und
+**Messintervall** (1, 5, 10, 15, 30, 60, 120, 360, 720, 1440 Minuten).
+Einstellungen bleiben bei Neustart erhalten. Automatischer Light-sleep ist
+aktiviert; fuer echte Verbrauchsmessungen USB vom PC trennen.
+Die neuen Einstellungs-Endpunkte und der Stromsparbetrieb sind am Board noch
+zu bestaetigen. Die Hardware der schaltbaren Versorgung ist separat aufzubauen.
+
+Seit 0.2.1: Auswahl waehrend des Haltens an der blauen GPIO13-LED erkennen,
 anstatt Sekunden abzuzaehlen. Beim ersten Blink loslassen fuer trocken,
 fuer nass weiterhalten bis zum Doppelblink. Ab 10 Sekunden zeigt schnelles
 Blinken den Matter-Werksreset an. Anlernen per Doppelklick. Diese neue
-LED-Bedienung muss noch am Board bestaetigt werden; die folgenden Hardwaretests
-wurden mit 0.2.0-soil-usbdiag durchgefuehrt.
+Einzelblink und Trocken-Speicherung wurden am Board bestaetigt; der Doppelblink
+und die Doppelklick-Bedienung stehen noch zur visuellen Abnahme aus.
+Die folgenden Hardwaretests wurden mit 0.2.0-soil-usbdiag durchgefuehrt.
 
 Am 03.11.2026 wurden Firmware-Build, Flashen und die reale Bodenfeuchtemessung am
 neuen H2 (USB-Seriennummer endet DA:89) bestaetigt. Trocken-/Nasskalibrierung,
 Home-Assistant-Kopplung und Wertuebertragung funktionieren. Nach einer
 USB-Stromunterbrechung wurden Kalibrierung und beide Matter-Fabrics geladen,
-Thread-Wiederbeitritt und Abonnementfortsetzung bestaetigt. Automatische Messung
-nach 15 Minuten und Batteriebetrieb sind noch nicht separat am Board geprueft.
+Thread-Wiederbeitritt und Abonnementfortsetzung bestaetigt. Auch eine automatische
+Messung nach 15 Minuten wurde mit 0.2.0 bestaetigt. Batteriebetrieb und Verbrauch
+sind noch nicht geprueft.
 Das alte Board startete im Vergleich nicht; ein konkreter Hardwaredefekt ist
 nicht bewiesen. Der gepruefte Build:
 [GitHub Actions](https://github.com/OliverDoMS/esp-matter-over-thread/actions/runs/41641382706).
@@ -32,7 +42,7 @@ Die alten lokalen Pakete `dist-usbdiag` und `dist-lowpower` enthalten weiterhin
 die bisherigen Versionen. Neue Builds ersetzen diese Diagnosepakete nicht.
 
 Enthalten sind Thread Sleepy End Device, Matter Short Idle Time ICD und eine reale
-ADC-Messung. Fuer die Sensorinbetriebnahme ist automatischer Light-sleep deaktiviert.
+ADC-Messung. Ab 0.3.0 ist automatischer Light-sleep aktiviert.
 Der Sensortask wartet zwischen Messungen; ADC-Abtastung blockiert den Matter-Loop
 nicht. Es gibt keine WLAN-Verbindung und keine simulierten Messwerte.
 
