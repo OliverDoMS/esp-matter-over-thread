@@ -2,8 +2,8 @@
 
 ## Bedienung auf der Geraeteseite
 
-Zwei standardisierte Matter-ModeSelect-Endpunkte sollen in Home Assistant unter
-Konfiguration erscheinen (keine zusaetzliche Integration erforderlich):
+Zwei standardisierte Matter-ModeSelect-Endpunkte erscheinen in Home Assistant
+unter Konfiguration (am Testboard bestaetigt, keine zusaetzliche Integration):
 
 - **Bodenfeuchte bedienen:** Bereit, Jetzt messen, Trocken kalibrieren,
   Nass kalibrieren. Den Sensor zuerst in die jeweilige Referenz bringen,
@@ -17,8 +17,8 @@ Konfiguration erscheinen (keine zusaetzliche Integration erforderlich):
 
 Der einzelne kurze BOOT-Klick misst einmal; der Doppelklick oeffnet das
 Anlernfenster. Die LED-Auswahl fuer lokale Kalibrierung bleibt erhalten.
-Die neuen Konfigurations-Endpunkte muessen nach dem Update in Home Assistant
-neu erkannt werden. Zunaechst ohne Factory-Reset aktualisieren; falls der
+Die Konfigurations-Endpunkte wurden beim Test nach dem Anwendungsupdate ohne
+Factory-Reset erkannt. Falls der
 Controller die neuen Endpunkte nicht erkennt, den Interview-/Erkennungsablauf
 des Controllers pruefen. Vor einem eventuell noetigen Werksreset erst die
 bisherige Kopplung und Kalibrierung sichern.
@@ -77,6 +77,31 @@ noetig; dafuer waere `BASE_SOIL_DIRECT_GPIO_POWER` zu deaktivieren und seine
 Polaritaet passend einzustellen.
 
 ## Abnahme
+
+Pruefstand 03.11.2026, Firmware 0.3.1-soil-gpio, H2 mit USB-Seriennummer-Endung
+DA:89: Build und Flash-Verifikation erfolgreich. Sensor-VCC wurde vom Benutzer
+auf GPIO1 umgesteckt. Der erste ADC-Rohwert war 2752; Matter-Wiederbeitritt und
+Wertuebertragung wurden im Log bestaetigt. Beide Konfigurationsauswahlen sind
+laut Benutzer auf der Home-Assistant-Geraeteseite sichtbar.
+
+Die dort ausgeloeste Trocken-Kalibrierung und das gewaehlte Intervall von
+1 Minute wurden nach einer Stromunterbrechung im Startlog als `dry=2752` und
+`interval=1 minutes` geladen. Der Benutzer bestaetigte anschliessend, dass
+nach Einbringen in feuchte Erde der Wert innerhalb von etwa 90 Sekunden
+automatisch anstieg, ohne Taste oder HA-Messbefehl. Die USB-Konsole liefert
+nach der Startphase im Stromsparprofil nicht durchgehend Daten; eine stille
+Konsole allein darf daher nicht als Stillstand des Sensors gewertet werden.
+Lokales Protokoll: `output/h2-recovery/soil-gpio-da89-20261103.log` (nicht in Git).
+
+Der Benutzer bestaetigte auch die Nasskalibrierung ueber die HA-Geraeteseite
+(anschliessend etwa 100 %) und die Rueckstellung des Intervalls auf 60 Minuten.
+Der Test ohne PC-USB-Host konnte mangels eines passenden USB-Netzteils noch
+nicht durchgefuehrt werden. Daher sind BOOT-Wakeup nach Ruhe ohne Host und
+das tatsaechliche Schlafverhalten noch nicht als Hardwaretest bestaetigt.
+
+Offen bleiben die elektrische Spannungs-/Strommessung und ein separater
+Erreichbarkeitstest ohne PC-USB-Host. Softwareseitig aktivierter Light-sleep
+und funktionierende Messungen sind noch kein Nachweis einer Batterielaufzeit.
 
 1. Version, erhaltene Kalibrierung und Matter-Wiederbeitritt im Log pruefen.
 2. Beide Konfigurationsauswahlen auf der Home-Assistant-Geraeteseite pruefen.

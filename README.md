@@ -18,9 +18,14 @@ Die Home-Assistant-Geraeteseite erhaelt zwei Matter-Modusauswahlen:
 **Messintervall** (1, 5, 10, 15, 30, 60, 120, 360, 720, 1440 Minuten).
 Einstellungen bleiben bei Neustart erhalten. Automatischer Light-sleep ist
 aktiviert; fuer echte Verbrauchsmessungen USB vom PC trennen.
-Die neuen Einstellungs-Endpunkte, die direkte GPIO-Versorgung und der
-Stromsparbetrieb sind am Board noch zu bestaetigen. Nach dem Umstecken die
-Versorgungsspannung unter Sensorlast und beide Kalibrierreferenzen pruefen.
+Die beiden Einstellungs-Endpunkte und die direkte GPIO-Versorgung wurden am
+03.11.2026 am Board bestaetigt. Die ueber Home Assistant gesetzte Trockenreferenz
+und das Testintervall von 1 Minute blieben nach einer Stromunterbrechung erhalten.
+Der Benutzer bestaetigte die automatische Feuchteaenderung in Home Assistant
+ohne Tastendruck, die Nasskalibrierung mit etwa 100 % und die Rueckstellung
+auf 60 Minuten. Der Aufwecktest ohne PC-USB-Host steht noch aus.
+Die reale Versorgungsspannung unter Last, der Stromverbrauch
+und das tatsaechliche Schlafverhalten ohne PC-USB-Host sind noch zu messen.
 
 Seit 0.2.1: Auswahl waehrend des Haltens an der blauen GPIO13-LED erkennen,
 anstatt Sekunden abzuzaehlen. Beim ersten Blink loslassen fuer trocken,
@@ -39,8 +44,8 @@ Messung nach 15 Minuten wurde mit 0.2.0 bestaetigt. Batteriebetrieb und Verbrauc
 sind noch nicht geprueft.
 Das alte Board startete im Vergleich nicht; ein konkreter Hardwaredefekt ist
 nicht bewiesen. Der gepruefte Build:
-[GitHub Actions](https://github.com/OliverDoMS/esp-matter-over-thread/actions/runs/41641382706).
-Das lokal heruntergeladene Bodenfeuchtepaket liegt in `dist/soil-usbdiag`.
+[0.3.1-soil-gpio auf GitHub Actions](https://github.com/OliverDoMS/esp-matter-over-thread/actions/runs/41654752377).
+Das aktuelle lokal heruntergeladene Bodenfeuchtepaket liegt in `dist/soil-gpio`.
 Die alten lokalen Pakete `dist-usbdiag` und `dist-lowpower` enthalten weiterhin
 die bisherigen Versionen. Neue Builds ersetzen diese Diagnosepakete nicht.
 
