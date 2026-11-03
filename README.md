@@ -11,10 +11,16 @@ Trocken-/Nasskalibrierung per BOOT wird in NVS gespeichert. Ohne Kalibrierung
 wird kein Prozentwert erfunden. Messung erfolgt beim Start, alle 15 Minuten
 und auf kurzen BOOT-Druck. Anleitung: [BODENFEUCHTE.md](docs/BODENFEUCHTE.md).
 
-Der neue Sensorcode muss mit dem Firmware-Build und am Board verifiziert werden.
-Die Basis 0.1.1-usbdiag wurde am neuen H2 (USB-Seriennummer endet DA:89) erfolgreich
-mit Home Assistant gekoppelt; der virtuelle Kontakt reagiert auf BOOT. Das alte
-Board startete im Vergleich nicht. Ein konkreter Hardwaredefekt ist nicht bewiesen.
+Am 03.11.2026 wurden Firmware-Build, Flashen und die reale Bodenfeuchtemessung am
+neuen H2 (USB-Seriennummer endet DA:89) bestaetigt. Trocken-/Nasskalibrierung,
+Home-Assistant-Kopplung und Wertuebertragung funktionieren. Nach einer
+USB-Stromunterbrechung wurden Kalibrierung und beide Matter-Fabrics geladen,
+Thread-Wiederbeitritt und Abonnementfortsetzung bestaetigt. Automatische Messung
+nach 15 Minuten und Batteriebetrieb sind noch nicht separat am Board geprueft.
+Das alte Board startete im Vergleich nicht; ein konkreter Hardwaredefekt ist
+nicht bewiesen. Der gepruefte Build:
+[GitHub Actions](https://github.com/OliverDoMS/esp-matter-over-thread/actions/runs/41641382706).
+Das lokal heruntergeladene Bodenfeuchtepaket liegt in `dist/soil-usbdiag`.
 Die alten lokalen Pakete `dist-usbdiag` und `dist-lowpower` enthalten weiterhin
 die bisherigen Versionen. Neue Builds ersetzen diese Diagnosepakete nicht.
 

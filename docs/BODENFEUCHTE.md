@@ -74,6 +74,19 @@ Wassergehalt. Werte ausserhalb der Referenzen werden auf 0 bis 100 % begrenzt.
 
 ## Abnahme am Board
 
+Pruefstand 03.11.2026, H2 mit USB-Seriennummer-Endung DA:89:
+Firmware 0.2.0-soil-usbdiag erfolgreich gebaut, geschrieben und per esptool
+verifiziert. Das Testexemplar speicherte trocken 2816 und nass 1008 ADC-Schritte;
+diese Werte sind keine allgemeingueltige Kalibrierung fuer andere Sensoren.
+100 %, 0,88 % und 0 % wurden ueber Matter gemeldet, vom Controller bestaetigt
+und die Feuchteanzeige vom Benutzer in Home Assistant bestaetigt.
+Nach USB-Stromunterbrechung wurden dieselben Referenzen und beide Fabrics
+geladen. Thread-Wiederbeitritt, Abonnementfortsetzung und die Uebertragung des
+ersten neuen Werts (0,60 %) waren im Log sichtbar. Ein separater Tastendruck-RST-
+Test und der automatische 15-Minuten-Messzyklus stehen noch aus.
+Diagnoseprotokoll lokal: `output/h2-recovery/soil-da89-20261103.log`
+(von Git ausgeschlossen).
+
 - Nach dem Start muss `Firmware 0.2.0-soil-usbdiag` im Log stehen.
 - Trocken-/Nassreferenzen kalibrieren und Zwischenwerte in Home Assistant pruefen.
 - RST und Stromunterbrechung pruefen: Kalibrierung und Kopplung bleiben erhalten.
