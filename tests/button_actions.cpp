@@ -57,3 +57,8 @@ static_assert(base::soil::interval_mode(1440) == 9);
 static_assert(base::soil::interval_mode(0) == -1);
 static_assert(base::soil::interval_mode(61) == -1);
 static_assert(base::soil::interval_mode(65535) == -1);
+static_assert(base::soil::interval_wait_ticks(1, 1000) == 60000);
+static_assert(base::soil::interval_wait_ticks(60, 1000) == 3600000);
+static_assert(base::soil::interval_wait_ticks(120, 1000) == 7200000);
+static_assert(base::soil::interval_wait_ticks(1440, 1000) == 86400000);
+static_assert(base::soil::interval_wait_ticks(1440, 100) == 8640000);

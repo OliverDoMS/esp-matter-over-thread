@@ -157,7 +157,8 @@ void worker(void *)
         }
         // Changing the interval starts a new countdown. Requests wake this wait immediately.
         command = {base::soil::Request::Measure, 0, false};
-        xQueueReceive(s_queue, &command, pdMS_TO_TICKS(static_cast<uint32_t>(s_interval_minutes.load()) * 60000U));
+        xQueueReceive(s_queue, &command,
+                      static_cast<TickType_t>(base::soil::interval_wait_ticks(s_interval_minutes.load(), configTICK_RATE_HZ)));
     }
 }
 }

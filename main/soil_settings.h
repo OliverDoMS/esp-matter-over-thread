@@ -15,4 +15,9 @@ constexpr int interval_mode(uint16_t minutes)
     for (uint8_t i = 0; i < kIntervalCount; ++i) if (kIntervals[i].minutes == minutes) return i;
     return -1;
 }
+constexpr uint32_t interval_wait_ticks(uint16_t minutes, uint32_t tick_hz)
+{
+    // Convert minutes directly with a wide intermediate; long intervals must not wrap.
+    return static_cast<uint32_t>(static_cast<uint64_t>(minutes) * 60U * tick_hz);
+}
 }
