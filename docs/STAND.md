@@ -61,6 +61,11 @@ Symptome. Die Geraeteidentitaet ist also vermutlich nicht die Ursache.
    vermutlich in den Regensensor-Commits.
 3. Sonst das Board selbst pruefen: Log ueber einen UART-Adapter an den UART0-Pins mitlesen.
 
+## Geraete
+
+Alle Boards mit Firmware, Kopplungscode und Status: [geraete/README.md](../geraete/README.md).
+Die Drei-Sensor-Bodenfeuchte liegt auf `feature/soil-moisture-3`.
+
 ## Anlerncode
 
 Die MAC des Boards auslesen und daraus den Code berechnen:
