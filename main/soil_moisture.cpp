@@ -43,6 +43,8 @@ constexpr Pins kPins[kSensorCount] = {
 struct Sensor {
     adc_channel_t channel{};
     uint16_t endpoint = 0;
+    uint16_t raw_endpoint = 0; // 0: raw value not exposed
+    std::atomic<int> raw{-1};
     int32_t dry = -1, wet = -1;
     std::atomic<int> value{-1};
 };
@@ -91,6 +93,16 @@ void publish(intptr_t sensor)
         target.endpoint, chip::app::Clusters::RelativeHumidityMeasurement::Id,
         chip::app::Clusters::RelativeHumidityMeasurement::Attributes::MeasuredValue::Id, &value);
     if (err != ESP_OK) ESP_LOGE(TAG, "Sensor %d: publish failed: %s", static_cast<int>(sensor) + 1, esp_err_to_name(err));
+    const int raw = target.raw.load();
+    if (target.raw_endpoint == 0 || raw < 0) return;
+    // Raw ADC counts (0-4095) through the Pressure Measurement cluster, the closest
+    // plain numeric sensor Home Assistant shows; its unit label does not apply.
+    auto raw_value = esp_matter_nullable_int16(nullable<int16_t>(static_cast<int16_t>(raw)));
+    const esp_err_t raw_err = esp_matter::attribute::update(
+        target.raw_endpoint, chip::app::Clusters::PressureMeasurement::Id,
+        chip::app::Clusters::PressureMeasurement::Attributes::MeasuredValue::Id, &raw_value);
+    if (raw_err != ESP_OK)
+        ESP_LOGE(TAG, "Sensor %d: raw publish failed: %s", static_cast<int>(sensor) + 1, esp_err_to_name(raw_err));
 }
 
 esp_err_t read_mean(adc_oneshot_unit_handle_t adc, adc_channel_t channel, int &mean)
@@ -196,17 +208,23 @@ void measure(const Command &command)
         unit_cfg.unit_id = ADC_UNIT_1;
         setup = adc_oneshot_new_unit(&unit_cfg, &adc);
     }
-    bool success = true;
+    // The first problem decides what the action selection shows afterwards.
+    base::soil::Result result = base::soil::Result::Ok;
+    auto fail = [&result](base::soil::Result problem) {
+        if (result == base::soil::Result::Ok) result = problem;
+    };
     for (uint8_t i = first; i < end; ++i) {
         Sensor &target = s_sensors[i];
-        int raw = 0;
+        int raw = -1;
         const esp_err_t err = setup == ESP_OK ? read_sensor(adc, i, raw) : setup;
+        // Show the raw reading even when it was rejected; that is what helps with wiring.
+        if (raw >= 0) target.raw.store(raw);
         int value = -1;
         if (err == ESP_OK) {
             if (dry || wet) {
                 const esp_err_t saved = calibrate(i, dry, raw);
                 if (saved != ESP_OK) {
-                    success = false;
+                    fail(saved == ESP_ERR_INVALID_ARG ? base::soil::Result::DryNotAboveWet : base::soil::Result::Invalid);
                     ESP_LOGE(TAG, "Sensor %d: calibration not saved: %s", i + 1, esp_err_to_name(saved));
                 }
             }
@@ -216,21 +234,23 @@ void measure(const Command &command)
             if (value < 0) ESP_LOGW(TAG, "Sensor %d: moisture unknown, calibrate DRY and WET first", i + 1);
             else ESP_LOGI(TAG, "Sensor %d: relative soil moisture %d.%02d %%", i + 1, value / 100, value % 100);
         } else {
-            success = false;
+            fail(err == ESP_ERR_NOT_FOUND ? base::soil::not_connected(i) : base::soil::Result::Invalid);
             ESP_LOGW(TAG, "Sensor %d: reading invalid (%s, raw=%d); publishing unknown", i + 1, esp_err_to_name(err), raw);
         }
+        const int published = base::soil::published_hundredths(value, target.dry, target.wet);
         if (!base::soil::references_valid(target.dry, target.wet)) {
-            ESP_LOGI(TAG, "Sensor %d: not calibrated, publishing placeholder 1.23 %%", i + 1);
+            ESP_LOGI(TAG, "Sensor %d: not calibrated (dry=%ld wet=%ld), publishing placeholder %d.%02d %%", i + 1,
+                     static_cast<long>(target.dry), static_cast<long>(target.wet), published / 100, published % 100);
         }
-        target.value.store(base::soil::published_hundredths(value, target.dry, target.wet));
+        target.value.store(published);
         if (chip::DeviceLayer::PlatformMgr().ScheduleWork(publish, i) != CHIP_NO_ERROR) {
-            success = false;
+            fail(base::soil::Result::Invalid);
             ESP_LOGE(TAG, "Sensor %d: could not schedule moisture report", i + 1);
         }
     }
     if (adc != nullptr) adc_oneshot_del_unit(adc);
     if (locked) esp_pm_lock_release(s_measure_lock);
-    base::controls::operation_finished(success);
+    base::controls::operation_finished(result);
 }
 
 void worker(void *)
@@ -289,7 +309,13 @@ bool base::soil::calibrated(uint8_t sensor)
     return sensor < kSensorCount && references_valid(s_sensors[sensor].dry, s_sensors[sensor].wet);
 }
 
-esp_err_t base::soil::start(const uint16_t *endpoint_ids)
+int base::soil::initial_hundredths(uint8_t sensor)
+{
+    return sensor < kSensorCount ? placeholder_hundredths(s_sensors[sensor].dry, s_sensors[sensor].wet)
+                                 : kUncalibratedHundredths;
+}
+
+esp_err_t base::soil::start(const uint16_t *endpoint_ids, const uint16_t *raw_endpoint_ids)
 {
     if (s_task != nullptr) return ESP_ERR_INVALID_STATE;
     for (uint8_t i = 0; i < kSensorCount; ++i) {
@@ -311,6 +337,7 @@ esp_err_t base::soil::start(const uint16_t *endpoint_ids)
         err = sensor_power(i, false);
         if (err != ESP_OK) return err;
         s_sensors[i].endpoint = endpoint_ids[i];
+        if (raw_endpoint_ids != nullptr) s_sensors[i].raw_endpoint = raw_endpoint_ids[i];
         ESP_LOGI(TAG, "Sensor %d: AOUT GPIO%d, VCC GPIO%d, endpoint %u", i + 1, kPins[i].adc, kPins[i].power, endpoint_ids[i]);
     }
     esp_err_t err = esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "soil_measure", &s_measure_lock);
@@ -342,7 +369,8 @@ esp_err_t base::soil::set_interval_minutes(uint16_t minutes)
 esp_err_t base::soil::load_settings() { return ESP_OK; }
 uint16_t base::soil::interval_minutes() { return 60; }
 bool base::soil::calibrated(uint8_t) { return false; }
+int base::soil::initial_hundredths(uint8_t) { return kUncalibratedHundredths; }
 esp_err_t base::soil::set_interval_minutes(uint16_t) { return ESP_ERR_NOT_SUPPORTED; }
-esp_err_t base::soil::start(const uint16_t *) { return ESP_OK; }
+esp_err_t base::soil::start(const uint16_t *, const uint16_t *) { return ESP_OK; }
 esp_err_t base::soil::request(Request, uint8_t) { return ESP_OK; }
 #endif

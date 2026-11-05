@@ -26,18 +26,18 @@ Option make_option(const char *label, uint8_t mode)
 
 class ModeManager final : public Mode::SupportedModesManager {
 public:
-    Option actions[base::soil::kActionCount];
+    Option actions[base::soil::kModeCount];
     Option intervals[base::soil::kIntervalCount];
     ModeManager()
     {
-        for (uint8_t i = 0; i < base::soil::kActionCount; ++i)
-            actions[i] = make_option(base::soil::kActionLabels[i], i);
+        for (uint8_t i = 0; i < base::soil::kModeCount; ++i)
+            actions[i] = make_option(base::soil::mode_label(i), i);
         for (uint8_t i = 0; i < base::soil::kIntervalCount; ++i)
             intervals[i] = make_option(base::soil::kIntervals[i].label, i);
     }
     ModeOptionsProvider getModeOptionsProvider(chip::EndpointId endpoint) const override
     {
-        if (endpoint == s_actions) return {actions, actions + base::soil::kActionCount};
+        if (endpoint == s_actions) return {actions, actions + base::soil::kModeCount};
         if (endpoint == s_interval) return {intervals, intervals + base::soil::kIntervalCount};
         return {};
     }
@@ -58,10 +58,11 @@ void report_mode(uint16_t endpoint, uint8_t mode)
     if (err != ESP_OK) ESP_LOGE(TAG, "Mode report failed: %s", esp_err_to_name(err));
 }
 
-void report_result(intptr_t success)
+void report_result(intptr_t result)
 {
-    ESP_LOGI(TAG, "Requested operation %s", success ? "completed" : "FAILED; calibration unchanged if rejected");
-    report_mode(s_actions, 0);
+    const uint8_t mode = base::soil::result_mode(static_cast<base::soil::Result>(result));
+    ESP_LOGI(TAG, "Requested operation finished: %s", base::soil::mode_label(mode));
+    report_mode(s_actions, mode);
 }
 
 void report_interval(intptr_t)
@@ -114,7 +115,7 @@ esp_err_t base::controls::attribute_changed(esp_matter::attribute::callback_type
             base::soil::request(base::soil::Request::Measure) :
             base::soil::request(base::soil::action_is_dry(mode) ? base::soil::Request::Dry : base::soil::Request::Wet,
                                 base::soil::action_sensor(mode));
-        if (err != ESP_OK) operation_finished(false);
+        if (err != ESP_OK) operation_finished(base::soil::Result::Busy);
         return err;
     }
     if (endpoint == s_interval && mode < base::soil::kIntervalCount) {
@@ -125,9 +126,9 @@ esp_err_t base::controls::attribute_changed(esp_matter::attribute::callback_type
     return ESP_OK;
 }
 
-void base::controls::operation_finished(bool success)
+void base::controls::operation_finished(base::soil::Result result)
 {
-    if (chip::DeviceLayer::PlatformMgr().ScheduleWork(report_result, success ? 1 : 0) != CHIP_NO_ERROR)
+    if (chip::DeviceLayer::PlatformMgr().ScheduleWork(report_result, static_cast<intptr_t>(result)) != CHIP_NO_ERROR)
         ESP_LOGE(TAG, "Could not schedule action confirmation");
 }
 

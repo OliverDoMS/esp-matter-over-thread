@@ -1,6 +1,6 @@
 # Drei Bodenfeuchtesensoren an einem ESP32-H2
 
-Ab 0.5.0-soil3. Gleiche Sensoren wie in [BODENFEUCHTE.md](BODENFEUCHTE.md)
+Ab 0.5.0-soil3, Rueckmeldungen ab 0.6.0-soil3. Gleiche Sensoren wie in [BODENFEUCHTE.md](BODENFEUCHTE.md)
 (kapazitiv v1.2/v2.0), gleiches Stromsparprofil wie in [ENERGIESPAREN.md](ENERGIESPAREN.md).
 Noch nicht gebaut und nicht am Board getestet.
 
@@ -27,12 +27,22 @@ unbekannt gemeldet.
 
 ## Matter und Home Assistant
 
-Das Geraet meldet drei Feuchte-Endpunkte in fester Reihenfolge (Sensor 1, 2, 3) und
-zwei Auswahlen:
+Das Geraet meldet drei Feuchte-Endpunkte in fester Reihenfolge (Sensor 1, 2, 3),
+ab 0.6.0 drei Rohwert-Endpunkte (Sensor 1, 2, 3) und zwei Auswahlen:
 
 - **Bodenfeuchte bedienen:** Bereit, Jetzt messen, Sensor 1 trocken, Sensor 1 nass,
   Sensor 2 trocken, Sensor 2 nass, Sensor 3 trocken, Sensor 3 nass.
+  Nach jeder Aktion zeigt dieselbe Auswahl das Ergebnis (siehe unten).
 - **Messintervall:** wie bei der Ein-Sensor-Variante, Standard 60 Minuten.
+
+**Rohwerte (ab 0.6.0):** Endpunkte 6 bis 8 zeigen den ADC-Rohwert jedes Sensors
+(0 bis 4095) nach jeder Messung, auch wenn die Messung abgelehnt wurde. Matter kennt
+keinen neutralen Zahlensensor, daher erscheinen sie in Home Assistant als **Druck**.
+Die Einheit gilt nicht: Home Assistant teilt den Wert vermutlich durch 10 und zeigt kPa
+(unsicher, am Geraet noch nicht gesehen). In den Entitaetseinstellungen die Einheit auf
+**hPa** stellen, dann steht dort der Rohwert selbst. Trocken liegt er hoch, nass niedrig.
+Nach dem Update auf 0.6.0 in Home Assistant **Geraet neu abfragen**, damit die neuen
+Endpunkte erscheinen. Abschaltbar mit `CONFIG_BASE_SOIL_RAW_ENDPOINTS=n`.
 
 Home Assistant zeigt die drei Werte voraussichtlich als Luftfeuchte. Sie nach dem
 Anlernen umbenennen; welcher Wert zu welchem Sensor gehoert, zeigt das USB-Log beim
@@ -50,8 +60,34 @@ Jeder Sensor wird einzeln kalibriert, die anderen bleiben unveraendert.
 Der Trockenwert muss mindestens 100 ADC-Schritte ueber dem Nasswert liegen, sonst
 wird die Kalibrierung abgelehnt.
 
-Ab 0.5.1: Bis beide Werte eines Sensors gesetzt sind, meldet er den Platzhalter
-**1,23 %**, auch wenn er nicht angeschlossen ist. Home Assistant legt einen Matter-Sensor
+### Woran man sieht, ob es geklappt hat (ab 0.6.0)
+
+Nach der Aktion bleibt **Bodenfeuchte bedienen** auf dem Ergebnis stehen, bis zur
+naechsten Aktion:
+
+| Anzeige | Bedeutung |
+|---|---|
+| Ergebnis: OK | gemessen bzw. Referenz gespeichert |
+| Fehler: Sensor n nicht erkannt | Anschlusspruefung fehlgeschlagen, nichts gespeichert; Verdrahtung pruefen |
+| Fehler: trocken muss über nass liegen | Abstand unter 100 ADC-Schritten, nichts gespeichert |
+| Fehler: Messwert ungültig | Rohwert ausserhalb 100 bis 4000 oder ADC-Fehler |
+| Fehler: Gerät beschäftigt | vorige Aktion laeuft noch; kurz warten, erneut waehlen |
+
+Diese Ergebnis-Eintraege selbst auszuwaehlen bewirkt nichts. Bei „Jetzt messen“ zeigt
+die Auswahl das erste Problem; ein nicht angeschlossener Sensor 3 meldet also auch
+dann „Sensor 3 nicht erkannt“, wenn 1 und 2 fehlerfrei gemessen wurden.
+
+Der Feuchtewert zeigt den Kalibrierstand, solange nicht beide Referenzen gesetzt sind:
+
+| Feuchtewert | Stand |
+|---|---|
+| 1,23 % | weder trocken noch nass gespeichert |
+| 2,34 % | nur trocken gespeichert, nass fehlt |
+| 3,45 % | nur nass gespeichert, trocken fehlt |
+| echter Wert | beide gespeichert |
+
+Ab 0.5.1: Bis beide Werte eines Sensors gesetzt sind, meldet er einen Platzhalter
+(ab 0.6.0 wie oben, davor immer **1,23 %**), auch wenn er nicht angeschlossen ist. Home Assistant legt einen Matter-Sensor
 nur an, wenn er beim Einlesen einen Wert hat; mit „unbekannt“ wuerde er fehlen. Ein
 kalibrierter Sensor meldet bei einem Messfehler weiterhin unbekannt. Wird Home Assistant
 genau dann neu gestartet, fehlt dieser Sensor bis zum naechsten Neuladen der
@@ -95,7 +131,8 @@ Intervall faellt das gegenueber dem Thread-Betrieb kaum ins Gewicht; gemessen is
 
 1. Startlog: `Firmware 0.5.0-soil3`, die drei Sensorzeilen und `identity: Pairing`.
 2. Mit dem Code aus `scripts/pairing_code.py` anlernen.
-3. Ohne Kalibrierung: alle drei Werte unbekannt.
-4. Jeden Sensor einzeln trocken und nass kalibrieren, Werte in HA pruefen.
+3. Ohne Kalibrierung: alle drei Werte 1,23 %, Rohwerte veraendern sich mit der Feuchte.
+4. Jeden Sensor einzeln trocken und nass kalibrieren: nach trocken 2,34 % und
+   „Ergebnis: OK“, nach nass ein echter Wert.
 5. Einen Sensor abziehen: nur dieser meldet unbekannt, die anderen messen weiter.
 6. Neustart und Stromunterbrechung: Kalibrierung und Kopplung bleiben.
