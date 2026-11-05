@@ -29,6 +29,35 @@ if ((Get-Item -LiteralPath $image).Length -ne $expected.bytes -or
 if ($LASTEXITCODE -ne 0) {
     throw 'esptool fehlt. Installieren: python -m pip install "esptool>=4.8,<5"'
 }
+if ($ApplicationOnly -and $manifest.ota_supported) {
+    # Initial USB upgrade only: never overwrite a slot selected by a previous OTA.
+    $table = Join-Path $PSScriptRoot 'partition-table.bin'
+    $tableInfo = $manifest.files.PSObject.Properties['partition-table.bin'].Value
+    if (-not $tableInfo -or -not (Test-Path -LiteralPath $table) -or
+        (Get-Item -LiteralPath $table).Length -ne $tableInfo.bytes -or
+        (Get-FileHash -LiteralPath $table -Algorithm SHA256).Hash -ne $tableInfo.sha256) {
+        throw 'Partitionstabelle fehlt oder Pruefsumme stimmt nicht.'
+    }
+    $tableRead = [System.IO.Path]::GetTempFileName()
+    $otaRead = [System.IO.Path]::GetTempFileName()
+    try {
+        & python -m esptool --chip esp32h2 --port $Port --baud $Baud read_flash $manifest.partition_table_offset $tableInfo.bytes $tableRead
+        if ($LASTEXITCODE -ne 0) { throw 'Partitionstabelle konnte nicht gelesen werden.' }
+        if ((Get-Item -LiteralPath $tableRead).Length -ne $tableInfo.bytes -or
+            (Get-FileHash -LiteralPath $tableRead -Algorithm SHA256).Hash -ne $tableInfo.sha256) {
+            throw 'Andere Partitionstabelle auf dem Geraet; Anwendungsupdate abgebrochen.'
+        }
+        & python -m esptool --chip esp32h2 --port $Port --baud $Baud read_flash $manifest.ota_data_offset $manifest.ota_data_bytes $otaRead
+        if ($LASTEXITCODE -ne 0) { throw 'OTA-Bootauswahl konnte nicht gelesen werden.' }
+        $otaBytes = [System.IO.File]::ReadAllBytes($otaRead)
+        if ($otaBytes.Length -ne $manifest.ota_data_bytes -or
+            @($otaBytes | Where-Object { $_ -ne 255 }).Count -ne 0) {
+            throw 'OTA-Bootauswahl ist bereits gesetzt. Bitte per Matter OTA aktualisieren; kein festes ota_0-USB-Update.'
+        }
+    } finally {
+        Remove-Item -LiteralPath $tableRead, $otaRead -ErrorAction SilentlyContinue
+    }
+}
 if (-not $ApplicationOnly) {
     Write-Warning 'Erstinstallation: das Factory-Image ueberschreibt auch bisherige Kopplungsdaten.'
 }

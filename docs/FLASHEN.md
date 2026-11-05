@@ -1,5 +1,63 @@
 # Firmware flashen und testen
 
+## Drei Bodensensoren ab 0.5.0-soil3
+
+Eigene Variante mit Produkt-ID `0x8001`; sie ersetzt keine laufende Ein-Sensor-Firmware
+per Update. Erstinstallation mit `.\flash.ps1 -Port COMxx -EraseAll`.
+
+Diese Variante verwendet NICHT den gemeinsamen Testcode 34970112332. Anlerncode und
+Seriennummer werden aus der MAC des Chips abgeleitet:
+
+```powershell
+python -m esptool --chip esp32h2 --port COMxx read_mac
+python scripts/pairing_code.py <MAC>
+```
+
+Dieselben Werte stehen beim Start im USB-Log (`identity: Pairing: ...`).
+Verdrahtung und Kalibrierung: [BODENFEUCHTE-3.md](BODENFEUCHTE-3.md).
+
+## Matter OTA und Geraetenamen ab 0.4.0
+
+Das Profil meldet MoistureSensor / DoNetIoT / ESP32-H2 und aktiviert Matter OTA.
+Einmalig per USB als Anwendungsupdate installieren. Danach verwendet man
+MoistureSensor.ota mit einem Matter-OTA-Provider. Ablauf und Grenzen:
+[OTA.md](OTA.md). Die vorhandene Partitionstabelle bleibt unveraendert.
+
+## Direkte Sensorversorgung mit 0.3.1-soil-gpio
+
+0.3.1 versorgt den Sensor direkt aus GPIO1 (HIGH=an, LOW=aus), mit hoechster
+Treiberstaerke. Erst das Anwendungsupdate installieren, dann stromlos
+Sensor-VCC von 3V3 auf GPIO1 umstecken. GPIO1 nicht mit 3V3 verbinden.
+Die Polaritaet unterscheidet sich von 0.3.0; Details: ENERGIESPAREN.md.
+
+## Konfiguration und Stromsparprofil ab 0.3.0
+
+Das neue Profil ergaenzt zwei ModeSelect-Endpunkte fuer Home Assistant und
+aktiviert automatischen Light-sleep. Standardintervall 60 Minuten; Verdrahtung
+des optionalen externen Versorgungsschalters und Abnahme: ENERGIESPAREN.md.
+Ein Anwendungsupdate von 0.2.x erhaelt zunaechst NVS und Kopplung. Danach pruefen,
+ob der Controller die neuen Konfigurations-Endpunkte erkennt. Ein Factory-Flash
+setzt Kopplung und Kalibrierung zurueck und ist kein automatischer Update-Schritt.
+
+## Aktuelles Bodenfeuchteprofil 0.2.1-soil-led
+
+Beim Bedienungsupdate von 0.2.0 auf 0.2.1 nur die Anwendung schreiben
+(`-ApplicationOnly`), damit Kopplung und Kalibrierung erhalten bleiben.
+Die folgende Factory-Empfehlung betrifft den Wechsel vom Testkontakt und
+die Erstinstallation. Anlernen wird in 0.2.1 per BOOT-Doppelklick geoeffnet;
+die LED-Auswahl und Kalibrierung sind in BODENFEUCHTE.md beschrieben.
+
+Das aktuelle Buildprofil ersetzt den Testkontakt durch einen analogen
+Bodenfeuchtesensor. Verdrahtung, Kalibrierung und die geaenderten Tastenzeiten
+stehen in [BODENFEUCHTE.md](BODENFEUCHTE.md). Automatischer Light-sleep bleibt fuer
+diesen ersten Sensor-Funktionstest deaktiviert. Die unten beschriebenen
+Low-power-Tests gehoeren zu den vorherigen Basisprofilen.
+
+Weil sich der Endpunkttyp von Kontakt zu Feuchte aendert, das bisherige Geraet
+in den verbundenen Controllern entfernen, das neue Factory-Paket installieren
+und neu anlernen. Ein Factory-Flash setzt Kopplungs- und Kalibrierdaten zurueck.
+Alte lokale Pakete `dist-usbdiag`/`dist-lowpower` enthalten keinen Bodenfeuchtecode.
+
 ## Voraussetzungen
 
 - ESP32-H2 Super Mini mit 4 MB Flash und USB-Datenkabel.
@@ -143,7 +201,9 @@ verwendet wird, kann die Anwendung ohne Factory-Image geschrieben werden:
 .\flash.ps1 -Port COM4 -ApplicationOnly
 ```
 
-Diese Version verwendet fest `ota_0` bei `0x20000`; Matter OTA ist deaktiviert.
-`ApplicationOnly` ist nicht fuer fremde Firmware, andere Partitionstabellen oder
-ein spaeteres System mit aktivem `ota_1` vorgesehen. Einen Werksreset bei
-inkompatiblen Datenmodell-Aenderungen separat einplanen.
+Bis 0.3.1 wurde fest `ota_0` bei `0x20000` verwendet. Das neue Skript prueft bei
+OTA-Paketen die vorhandene Partitionstabelle und verlangt eine noch geloeschte
+OTA-Bootauswahl, bevor es diesen festen Slot beschreibt. Nach einem OTA-Update
+werden USB-Anwendungsupdates abgelehnt; dann den Matter-OTA-Weg verwenden.
+`ApplicationOnly` ist nicht fuer fremde Firmware oder andere Partitionstabellen
+vorgesehen. Einen Werksreset bei inkompatiblen Datenmodell-Aenderungen separat einplanen.

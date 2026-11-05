@@ -6,6 +6,7 @@ dist-lowpower/
 usb-monitor.log
 *-monitor.log
 reset-test.log
+output/h2-recovery/
 managed_components/
 sdkconfig
 sdkconfig.old
