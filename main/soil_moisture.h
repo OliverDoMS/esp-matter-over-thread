@@ -1,4 +1,5 @@
 #pragma once
+#include "soil_math.h"
 #include "soil_settings.h"
 #include <esp_err.h>
 #include <cstdint>
@@ -6,6 +7,8 @@
 namespace base::soil {
 enum class Request : uint32_t { Measure = 1, Dry = 2, Wet = 4 };
 esp_err_t load_settings();
+// Both references valid; call after load_settings().
+bool calibrated(uint8_t sensor);
 uint16_t interval_minutes();
 esp_err_t set_interval_minutes(uint16_t minutes);
 // endpoint_ids holds kSensorCount entries.

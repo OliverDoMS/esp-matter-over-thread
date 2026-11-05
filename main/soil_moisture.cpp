@@ -219,7 +219,10 @@ void measure(const Command &command)
             success = false;
             ESP_LOGW(TAG, "Sensor %d: reading invalid (%s, raw=%d); publishing unknown", i + 1, esp_err_to_name(err), raw);
         }
-        target.value.store(value);
+        if (!base::soil::references_valid(target.dry, target.wet)) {
+            ESP_LOGI(TAG, "Sensor %d: not calibrated, publishing placeholder 1.23 %%", i + 1);
+        }
+        target.value.store(base::soil::published_hundredths(value, target.dry, target.wet));
         if (chip::DeviceLayer::PlatformMgr().ScheduleWork(publish, i) != CHIP_NO_ERROR) {
             success = false;
             ESP_LOGE(TAG, "Sensor %d: could not schedule moisture report", i + 1);
@@ -281,6 +284,11 @@ esp_err_t base::soil::load_settings()
 
 uint16_t base::soil::interval_minutes() { return s_interval_minutes.load(); }
 
+bool base::soil::calibrated(uint8_t sensor)
+{
+    return sensor < kSensorCount && references_valid(s_sensors[sensor].dry, s_sensors[sensor].wet);
+}
+
 esp_err_t base::soil::start(const uint16_t *endpoint_ids)
 {
     if (s_task != nullptr) return ESP_ERR_INVALID_STATE;
@@ -333,6 +341,7 @@ esp_err_t base::soil::set_interval_minutes(uint16_t minutes)
 #else
 esp_err_t base::soil::load_settings() { return ESP_OK; }
 uint16_t base::soil::interval_minutes() { return 60; }
+bool base::soil::calibrated(uint8_t) { return false; }
 esp_err_t base::soil::set_interval_minutes(uint16_t) { return ESP_ERR_NOT_SUPPORTED; }
 esp_err_t base::soil::start(const uint16_t *) { return ESP_OK; }
 esp_err_t base::soil::request(Request, uint8_t) { return ESP_OK; }

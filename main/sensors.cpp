@@ -27,6 +27,9 @@ esp_err_t base::sensors::create_endpoints(esp_matter::node_t *node)
     soil_config.relative_humidity_measurement.min_measured_value = static_cast<uint16_t>(0);
     soil_config.relative_humidity_measurement.max_measured_value = static_cast<uint16_t>(10000);
     for (uint8_t i = 0; i < base::soil::kSensorCount; ++i) {
+        // Home Assistant only creates an entity when the value is not null at its interview.
+        soil_config.relative_humidity_measurement.measured_value = base::soil::calibrated(i) ?
+            nullable<uint16_t>() : nullable<uint16_t>(static_cast<uint16_t>(base::soil::kUncalibratedHundredths));
         auto *soil_endpoint = esp_matter::endpoint::humidity_sensor::create(
             node, &soil_config, esp_matter::ENDPOINT_FLAG_NONE, nullptr);
         if (soil_endpoint == nullptr) return ESP_ERR_NO_MEM;

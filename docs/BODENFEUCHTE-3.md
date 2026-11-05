@@ -48,8 +48,14 @@ Jeder Sensor wird einzeln kalibriert, die anderen bleiben unveraendert.
 3. Sensor n in die nasse Referenz bringen, dann `Sensor n nass` waehlen.
 
 Der Trockenwert muss mindestens 100 ADC-Schritte ueber dem Nasswert liegen, sonst
-wird die Kalibrierung abgelehnt. Bis beide Werte eines Sensors gesetzt sind, meldet er
-unbekannt. Die Werte liegen im NVS-Namespace `soil_cal` (`dry1`/`wet1` bis
+wird die Kalibrierung abgelehnt.
+
+Ab 0.5.1: Bis beide Werte eines Sensors gesetzt sind, meldet er den Platzhalter
+**1,23 %**, auch wenn er nicht angeschlossen ist. Home Assistant legt einen Matter-Sensor
+nur an, wenn er beim Einlesen einen Wert hat; mit „unbekannt“ wuerde er fehlen. Ein
+kalibrierter Sensor meldet bei einem Messfehler weiterhin unbekannt. Wird Home Assistant
+genau dann neu gestartet, fehlt dieser Sensor bis zum naechsten Neuladen der
+Matter-Integration (Einstellungen → Geraete & Dienste → Matter → Neu laden). Die Werte liegen im NVS-Namespace `soil_cal` (`dry1`/`wet1` bis
 `dry3`/`wet3`) und ueberstehen Neustart und Matter-Werksreset, nicht aber `-EraseAll`.
 
 ## BOOT-Taste
