@@ -9,6 +9,8 @@ menu "DoNetIoT base system"
 
     config BASE_NODE_LABEL
         string "Matter node label (maximum 32 bytes)"
+        default "DoNetIoT Bodenfeuchte 3" if BASE_SOIL_MOISTURE
+        default "DoNetIoT Regensensor" if BASE_RAIN_SENSOR
         default "DoNetIoT H2 Base"
 
     config BASE_BUTTON_GPIO
@@ -28,17 +30,37 @@ menu "DoNetIoT base system"
 
     config BASE_TEST_CONTACT
         bool "Create a virtual contact sensor for initial commissioning tests"
+        depends on !BASE_SOIL_MOISTURE
         default n
         help
             A short button press toggles this TEST contact. No physical sensor
             is read. Add real sensor endpoints in sensors.cpp in later variants.
 
-    config BASE_RAIN_SENSOR
-        bool "Rain sensor (analog rain board, Matter Rain Sensor device type)"
-        default y
+    choice BASE_SENSOR_VARIANT
+        prompt "Sensor variant"
+        default BASE_RAIN_SENSOR
         help
-            Reads an analog rain board. The board outputs a LOWER voltage when wet.
-            The sensor is powered from a GPIO only while measuring.
+            Exactly one sensor variant per firmware image. Each variant has its own
+            Matter product ID, so OTA images of one variant never reach another.
+            Build with -DDNIOT_VARIANT=<name>; see variants/README.md.
+
+        config BASE_RAIN_SENSOR
+            bool "Rain sensor (analog rain board, Matter Rain Sensor device type)"
+            help
+                Reads an analog rain board. The board outputs a LOWER voltage when wet.
+                The sensor is powered from a GPIO only while measuring.
+
+        config BASE_SOIL_MOISTURE
+            bool "Three analog capacitive soil moisture sensors"
+            help
+                Each sensor: VCC to its supply GPIO (HIGH only while measured),
+                AOUT to its ADC GPIO, GND to GND. Sensors are read one after another.
+                Calibrate dry and wet per sensor over Matter before percentages appear.
+                Avoid GPIO2 and GPIO3 (strapping pins) for AOUT.
+
+        config BASE_SENSOR_NONE
+            bool "No physical sensor (base system only)"
+    endchoice
 
     config BASE_RAIN_ADC_GPIO
         int "Rain board analog output (ADC1 pin)"
@@ -85,4 +107,62 @@ menu "DoNetIoT base system"
         default 2000
         help
             Must be above the wet threshold; the gap is the hysteresis.
+
+    config BASE_SOIL_1_ADC_GPIO
+        int "Sensor 1 AOUT GPIO (H2 ADC1)"
+        depends on BASE_SOIL_MOISTURE
+        range 1 5
+        default 4
+
+    config BASE_SOIL_1_POWER_GPIO
+        int "Sensor 1 VCC GPIO"
+        depends on BASE_SOIL_MOISTURE
+        range 0 14
+        default 10
+
+    config BASE_SOIL_2_ADC_GPIO
+        int "Sensor 2 AOUT GPIO (H2 ADC1)"
+        depends on BASE_SOIL_MOISTURE
+        range 1 5
+        default 5
+
+    config BASE_SOIL_2_POWER_GPIO
+        int "Sensor 2 VCC GPIO"
+        depends on BASE_SOIL_MOISTURE
+        range 0 14
+        default 11
+
+    config BASE_SOIL_3_ADC_GPIO
+        int "Sensor 3 AOUT GPIO (H2 ADC1)"
+        depends on BASE_SOIL_MOISTURE
+        range 1 5
+        default 1
+
+    config BASE_SOIL_3_POWER_GPIO
+        int "Sensor 3 VCC GPIO"
+        depends on BASE_SOIL_MOISTURE
+        range 0 14
+        default 12
+
+    config BASE_SOIL_CONNECTION_CHECK
+        bool "Report a sensor as unknown when AOUT is not driven by a sensor"
+        depends on BASE_SOIL_MOISTURE
+        default y
+        help
+            Reads AOUT with the internal pulldown before and after power on.
+            Disable only if a connected sensor is rejected by mistake.
+
+    config BASE_BUTTON_LED_FEEDBACK
+        bool "Show the BOOT reset selection on the blue GPIO13 LED"
+        depends on BASE_SOIL_MOISTURE && BASE_DISABLE_SUPERMINI_LEDS
+        default y
+        help
+            Rapid blinking after 10 s selects Matter reset. Release BOOT to
+            execute. GPIO13 must not be used as the service button.
+
+    config BASE_SOIL_SETTLE_MS
+        int "Sensor settling time after power on (milliseconds)"
+        depends on BASE_SOIL_MOISTURE
+        range 50 5000
+        default 500
 endmenu

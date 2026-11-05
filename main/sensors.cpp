@@ -1,4 +1,6 @@
 #include "sensors.h"
+#include "soil_moisture.h"
+#include "soil_controls.h"
 
 #include <esp_log.h>
 #include <sdkconfig.h>
@@ -19,6 +21,9 @@
 
 namespace {
 constexpr char TAG[] = "sensors";
+#if CONFIG_BASE_SOIL_MOISTURE
+uint16_t s_soil_endpoint_ids[base::soil::kSensorCount] = {};
+#endif
 #if CONFIG_BASE_TEST_CONTACT
 uint16_t s_endpoint_id = 0;
 bool s_closed = true;
@@ -139,6 +144,25 @@ esp_err_t base::sensors::create_endpoints(esp_matter::node_t *node)
     s_rain_endpoint_id = esp_matter::endpoint::get_id(rain_endpoint);
     ESP_LOGI(TAG, "Rain sensor on endpoint %u", s_rain_endpoint_id);
 #endif
+#if CONFIG_BASE_SOIL_MOISTURE
+    esp_matter::endpoint::humidity_sensor::config_t soil_config{};
+    soil_config.identify.identify_type = 0;
+    soil_config.relative_humidity_measurement.min_measured_value = static_cast<uint16_t>(0);
+    soil_config.relative_humidity_measurement.max_measured_value = static_cast<uint16_t>(10000);
+    for (uint8_t i = 0; i < base::soil::kSensorCount; ++i) {
+        // Home Assistant only creates an entity when the value is not null at its interview.
+        soil_config.relative_humidity_measurement.measured_value = base::soil::calibrated(i) ?
+            nullable<uint16_t>() : nullable<uint16_t>(static_cast<uint16_t>(base::soil::kUncalibratedHundredths));
+        auto *soil_endpoint = esp_matter::endpoint::humidity_sensor::create(
+            node, &soil_config, esp_matter::ENDPOINT_FLAG_NONE, nullptr);
+        if (soil_endpoint == nullptr) return ESP_ERR_NO_MEM;
+        s_soil_endpoint_ids[i] = esp_matter::endpoint::get_id(soil_endpoint);
+        ESP_LOGI(TAG, "Relative soil moisture %d on endpoint %u (Matter humidity compatibility)",
+                 i + 1, s_soil_endpoint_ids[i]);
+    }
+    const esp_err_t controls_error = base::controls::create_endpoints(node);
+    if (controls_error != ESP_OK) return controls_error;
+#endif
 #if CONFIG_BASE_TEST_CONTACT
     esp_matter::endpoint::contact_sensor::config_t config{};
     config.boolean_state.state_value = s_closed;
@@ -173,7 +197,13 @@ esp_err_t base::sensors::start()
                         "Timer start failed");
     xTaskNotifyGive(s_task); // First measurement right after startup
 #endif
+#if CONFIG_BASE_SOIL_MOISTURE
+    const esp_err_t err = base::soil::start(s_soil_endpoint_ids);
+    if (err == ESP_OK) base::controls::start();
+    return err;
+#else
     return ESP_OK;
+#endif
 }
 
 esp_err_t base::sensors::toggle_test_contact()

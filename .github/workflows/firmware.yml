@@ -4,6 +4,11 @@ on:
     branches: [main, 'codex/**', 'feature/**']
   pull_request:
   workflow_dispatch:
+    inputs:
+      diagnostic:
+        description: "Diagnostic images (Light-sleep off, USB log readable). Never for normal use."
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -21,6 +26,12 @@ jobs:
 
   firmware:
     needs: host-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        # One entry per directory in variants/; host tests check they stay distinct.
+        variant: [rain, soil3]
+    name: firmware (${{ matrix.variant }})
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     container:
@@ -32,9 +43,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Compile, validate configuration and package binaries
+        env:
+          DNIOT_DIAGNOSTIC: ${{ inputs.diagnostic && '1' || '' }}
         run: |
           set -o pipefail
-          if ! bash scripts/build.sh 2>&1 | tee build.log; then
+          if ! bash scripts/build.sh "${{ matrix.variant }}" 2>&1 | tee build.log; then
             # Show the first errors as annotations so they are readable without opening the log.
             grep -E "error:|Error |ERROR|Traceback|ValueError|CMake Error|undefined reference" build.log | head -15 | cut -c1-400 | while IFS= read -r line; do echo "::error::${line}"; done
             exit 1
@@ -42,7 +55,7 @@ jobs:
       - name: Upload flash package
         uses: actions/upload-artifact@v4
         with:
-          name: esp32h2-supermini-base
+          name: esp32h2-${{ matrix.variant }}${{ inputs.diagnostic && '-diag' || '' }}
           path: dist/
           if-no-files-found: error
           retention-days: 30

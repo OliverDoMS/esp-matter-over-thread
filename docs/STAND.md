@@ -1,4 +1,4 @@
-# Arbeitsstand Regensensor
+# Arbeitsstand
 
 Uebergabe zum Weiterarbeiten auf einem anderen Rechner.
 
@@ -13,19 +13,25 @@ python -m venv .venv
 
 Vor dem Flashen `.venv\Scripts` an den Anfang von `PATH` setzen, denn `flash.ps1` ruft
 `python -m esptool` auf. Gebaut wird ueber GitHub Actions, lokal gibt es keinen Build ohne
-Docker. Das Artefakt `esp32h2-supermini-base` laesst sich nur mit GitHub-Login laden und
+Docker. Das Artefakt laesst sich nur mit GitHub-Login laden und
 wird nach 30 Tagen geloescht; dann den Lauf neu starten.
+Artefakte heissen jetzt `esp32h2-<variante>`, siehe [variants/README.md](../variants/README.md).
 
 ## Branches
 
-| Branch | Inhalt |
-|---|---|
-| `main` | Regensensor, Geraeteidentitaet aus der MAC, Light-sleep an |
-| `feature/rain-sensor-diag` | wie `main`, aber Light-sleep aus, nur zum Lesen des USB-Logs. Nicht nach `main` mergen |
-| `feature/rain-sensor-lowpower` | Vorstufe von `main`, kann weg |
-| `feature/rain-sensor` | erster Stand ohne Light-sleep-Fixes, kann weg |
+Seit der Konsolidierung (05.11.2026) gibt es nur noch `main`. Regensensor und
+Drei-Sensor-Bodenfeuchte sind Varianten in `variants/`, der Diagnose-Build ist das
+Overlay `variants/diagnostic.sdkconfig`. Alle frueheren Branches sind in `main`
+enthalten oder ueberholt und koennen geloescht werden:
 
-## Hardware
+| Branch | Verbleib |
+|---|---|
+| `feature/soil-moisture-3`, `codex/h2-soil-moisture` | in `main` gemergt, Variante `soil3` |
+| `feature/rain-sensor-diag` | ersetzt durch Diagnose-Overlay |
+| `feature/rain-sensor`, `feature/rain-sensor-lowpower` | Vorstufen, in `main` enthalten |
+| `codex/base-system`, `codex/usb-console-sleep`, `codex/lowpower-restore` | in `main` enthalten |
+
+## Hardware Regensensor
 
 ESP32-H2 Super Mini, Regenplatine: AO an GPIO1, VCC an GPIO10, GND an GND. Fuer Tests nur
 per USB versorgen.
@@ -50,6 +56,11 @@ Das Geraet laesst sich noch nicht anlernen:
 Die Ursache ist unbekannt. Es ist auch nicht belegt, dass die Firmware nach dem Start laeuft
 oder dass sie denselben Anlerncode ableitet wie `scripts/pairing_code.py`.
 
+Eingrenzung: Das Drei-Sensor-Bodenfeuchte-Board DA:0B startete am 05.11.2026 mit
+derselben Geraeteidentitaet, schrieb ins USB-Log und warb per BLE (siehe Geraeteliste).
+Gegenueber `main` vor der Konsolidierung unterscheidet sich der Code im Wesentlichen nur
+durch den Regensensor. Belegt ist die Ursache damit nicht; auch das Board kommt in Frage.
+
 Hinweis: Die erste Regensensor-Firmware ohne Geraeteidentitaet (`6373350`) zeigte dieselben
 Symptome. Die Geraeteidentitaet ist also vermutlich nicht die Ursache.
 
@@ -72,8 +83,9 @@ Die MAC des Boards auslesen und daraus den Code berechnen:
 
 ```powershell
 python -m esptool --chip esp32h2 --port COMxx read_mac
-python scripts/pairing_code.py <MAC>
+python scripts/pairing_code.py <BASE MAC>   # die Zeile "BASE MAC" von read_mac, nicht die 8-Byte-MAC
 ```
 
 Sobald das Geraet sendet, zeigt `scripts/ble_scan.py` den Discriminator an. Er muss mit der
-Ausgabe von `pairing_code.py` uebereinstimmen.
+Ausgabe von `pairing_code.py` uebereinstimmen. Das gilt erst ab dem MAC-Fix der
+Konsolidierung; aeltere Firmware rechnet mit der falschen MAC (siehe Geraeteliste).

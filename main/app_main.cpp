@@ -2,6 +2,8 @@
 #include "board.h"
 #include "device_identity.h"
 #include "sensors.h"
+#include "soil_moisture.h"
+#include "soil_controls.h"
 
 #include <cstdio>
 #include <cstring>
@@ -10,6 +12,7 @@
 #include <esp_pm.h>
 #include <esp_system.h>
 #include <esp_app_desc.h>
+#include <esp_ota_ops.h>
 #include <nvs_flash.h>
 #include <esp_matter.h>
 #include <app/icd/server/ICDNotifier.h>
@@ -24,6 +27,30 @@
 
 namespace {
 constexpr char TAG[] = "base";
+#if CONFIG_ENABLE_OTA_REQUESTOR
+esp_pm_lock_handle_t s_ota_lock = nullptr;
+bool s_ota_awake = false;
+
+void update_ota_power(chip::DeviceLayer::OtaState state)
+{
+    using namespace chip::DeviceLayer;
+    switch (state) {
+    case kOtaDownloadInProgress:
+    case kOtaApplyInProgress:
+        if (!s_ota_awake && esp_pm_lock_acquire(s_ota_lock) == ESP_OK) s_ota_awake = true;
+        break;
+    case kOtaDownloadFailed:
+    case kOtaDownloadComplete:
+    case kOtaDownloadAborted:
+    case kOtaApplyFailed:
+        if (s_ota_awake && esp_pm_lock_release(s_ota_lock) == ESP_OK) s_ota_awake = false;
+        break;
+    default:
+        break;
+    }
+    ESP_LOGI(TAG, "Matter OTA state=%d; sleep lock=%d", static_cast<int>(state), s_ota_awake);
+}
+#endif
 #if CONFIG_BASE_DIAGNOSTIC_NO_SLEEP
 constexpr bool kDiagnosticNoSleep = true;
 #else
@@ -53,7 +80,11 @@ void handle_button(intptr_t action_value)
     case base::ButtonAction::Wake:
         break;
     case base::ButtonAction::TestContact:
+#if CONFIG_BASE_SOIL_MOISTURE
+        ESP_ERROR_CHECK_WITHOUT_ABORT(base::soil::request(base::soil::Request::Measure));
+#else
         ESP_ERROR_CHECK_WITHOUT_ABORT(base::sensors::toggle_test_contact());
+#endif
         break;
     case base::ButtonAction::Commission:
         open_commissioning_window();
@@ -77,6 +108,11 @@ void device_event(const ChipDeviceEvent *event, intptr_t)
 {
     using namespace chip::DeviceLayer;
     switch (event->Type) {
+#if CONFIG_ENABLE_OTA_REQUESTOR
+    case DeviceEventType::kOtaStateChanged:
+        update_ota_power(event->OtaStateChanged.newState);
+        break;
+#endif
     case DeviceEventType::kCommissioningComplete:
         ESP_LOGI(TAG, "Commissioning complete; automatic Light-sleep %s; ICD enabled",
                  kDiagnosticNoSleep ? "disabled (diagnostic)" : "enabled");
@@ -88,7 +124,11 @@ void device_event(const ChipDeviceEvent *event, intptr_t)
         ESP_LOGI(TAG, "Commissioning window closed");
         break;
     case DeviceEventType::kFailSafeTimerExpired:
+#if CONFIG_BASE_SOIL_MOISTURE
+        ESP_LOGW(TAG, "Commissioning failed or timed out; double-click BOOT to retry");
+#else
         ESP_LOGW(TAG, "Commissioning failed or timed out; use BOOT 3-9 s to retry");
+#endif
         break;
     case DeviceEventType::kInterfaceIpAddressChanged:
         ESP_LOGI(TAG, "IPv6 interface address changed");
@@ -103,10 +143,10 @@ void device_event(const ChipDeviceEvent *event, intptr_t)
     }
 }
 
-esp_err_t attribute_changed(esp_matter::attribute::callback_type_t, uint16_t, uint32_t,
-                            uint32_t, esp_matter_attr_val_t *, void *)
+esp_err_t attribute_changed(esp_matter::attribute::callback_type_t type, uint16_t endpoint, uint32_t cluster,
+                            uint32_t attribute, esp_matter_attr_val_t *value, void *)
 {
-    return ESP_OK;
+    return base::controls::attribute_changed(type, endpoint, cluster, attribute, value);
 }
 
 esp_err_t identify(esp_matter::identification::callback_type_t, uint16_t endpoint_id,
@@ -128,12 +168,20 @@ extern "C" void app_main()
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err);
+    ESP_ERROR_CHECK(base::soil::load_settings());
 
     esp_pm_config_t pm{};
     pm.max_freq_mhz = CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ;
     pm.min_freq_mhz = 32;
     pm.light_sleep_enable = !kDiagnosticNoSleep;
     ESP_ERROR_CHECK(esp_pm_configure(&pm));
+#if CONFIG_ENABLE_OTA_REQUESTOR
+    ESP_ERROR_CHECK(esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "matter_ota", &s_ota_lock));
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    ESP_LOGI(TAG, "Matter OTA enabled; running partition=%s offset=0x%lx size=0x%lx",
+             running->label, static_cast<unsigned long>(running->address),
+             static_cast<unsigned long>(running->size));
+#endif
     if (kDiagnosticNoSleep) {
         ESP_LOGW(TAG, "DIAGNOSTIC: automatic Light-sleep DISABLED; not for battery measurements");
     } else {
@@ -165,6 +213,10 @@ extern "C" void app_main()
     ESP_ERROR_CHECK(base::init_board(queue_button));
     ESP_LOGI(TAG, "DoNetIoT H2 Base %s: Thread sleepy end device / SIT ICD",
              esp_app_get_description()->version);
+#if CONFIG_BASE_SOIL_MOISTURE
+    ESP_LOGI(TAG, "BOOT: click=measure all; double-click=pairing; >=10 s rapid blinking=reset, on release; calibrate over Matter");
+#else
     ESP_LOGI(TAG, "BOOT: <1 s TEST contact; 3-9 s pairing; >=10 s factory reset, on release");
+#endif
     ESP_LOGI(TAG, "Battery measurement not fitted/enabled; no invented voltage or percentage");
 }

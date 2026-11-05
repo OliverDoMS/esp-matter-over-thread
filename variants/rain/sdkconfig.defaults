@@ -1,0 +1,11 @@
+# Single analog rain board, Matter Rain Sensor device type.
+CONFIG_BASE_RAIN_SENSOR=y
+CONFIG_BASE_TEST_CONTACT=n
+CONFIG_BASE_RAIN_ADC_GPIO=1
+CONFIG_BASE_RAIN_POWER_GPIO=10
+# Root node and the rain sensor endpoint, with headroom.
+CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=4
+# Development product ID 0x8000, unchanged from the original main firmware.
+# Caution: the earlier single-sensor MoistureSensor builds also used 0x8000;
+# never serve a rain OTA image to such a device.
+CONFIG_DEVICE_PRODUCT_ID=0x8000

@@ -1,0 +1,3 @@
+# Diagnostic overlay (-DDNIOT_DIAGNOSTIC=ON): no automatic Light-sleep, so the USB
+# boot log stays readable. Higher current draw; never ship or measure battery with it.
+CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=y

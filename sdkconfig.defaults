@@ -1,3 +1,5 @@
+# Common settings for every variant. CMakeLists.txt layers
+# variants/<name>/sdkconfig.defaults (and variants/diagnostic.sdkconfig) on top.
 CONFIG_IDF_TARGET="esp32h2"
 CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
 CONFIG_PARTITION_TABLE_CUSTOM=y
@@ -56,18 +58,21 @@ CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
 # Keep the native USB console reachable while a PC is connected.
 # Automatic Light-sleep remains available after disconnecting the USB host.
 CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION=y
-# Normal low-power profile; retain the diagnostic switch for troubleshooting.
+# Keep Matter/Thread reachable, sleeping automatically between protocol and sensor work.
 CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=n
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
-CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=4
-CONFIG_ENABLE_OTA_REQUESTOR=n
+# Standard Matter BDX updates into the inactive OTA slot.
+CONFIG_ENABLE_OTA_REQUESTOR=y
+CONFIG_CHIP_OTA_IMAGE_BUILD=y
+CONFIG_OTA_AUTO_REBOOT_ON_APPLY=y
+CONFIG_OTA_AUTO_REBOOT_DELAY_MS=5000
 
 # Per-device passcode, discriminator, salt and serial number derived from the chip MAC
 # (main/device_identity.cpp). Attestation still uses the Matter test certificates.
 CONFIG_CUSTOM_COMMISSIONABLE_DATA_PROVIDER=y
 # Development credentials, not a certified commercial product.
 CONFIG_DEVICE_VENDOR_ID=0xFFF1
-CONFIG_DEVICE_PRODUCT_ID=0x8000
 CONFIG_USE_TEST_SERIAL_NUMBER=""
+# Product ID and sensor settings come from variants/<name>/sdkconfig.defaults.
 CONFIG_TEST_EVENT_TRIGGER_ENABLED=n
 CONFIG_CHIP_ENABLE_PAIRING_AUTOSTART=y

@@ -51,7 +51,12 @@ bool passcode_valid(uint32_t p)
 
 bool derive(Credentials &c)
 {
-    if (esp_efuse_mac_get_default(c.mac) != ESP_OK) return false;
+    // ESP_MAC_BASE is the 6-byte base MAC that esptool prints as "BASE MAC" and that
+    // scripts/pairing_code.py expects. esp_efuse_mac_get_default() must not be used here:
+    // on the 802.15.4-capable H2 it can return the 8-byte EUI-64 (74:4d:bd:ff:fe:...),
+    // which overflowed this 6-byte field and gave boards sharing their 4th MAC byte the
+    // same pairing code and serial number.
+    if (esp_read_mac(c.mac, ESP_MAC_BASE) != ESP_OK) return false;
     uint8_t input[sizeof(kContext) - 1 + sizeof(c.mac)];
     std::memcpy(input, kContext, sizeof(kContext) - 1);
     std::memcpy(input + sizeof(kContext) - 1, c.mac, sizeof(c.mac));
@@ -151,8 +156,10 @@ esp_err_t base::identity::install()
         return ESP_FAIL;
     }
     esp_matter::set_custom_commissionable_data_provider(&s_provider);
-    ESP_LOGI(TAG, "Pairing: passcode=%08" PRIu32 " discriminator=%u (manual code: scripts/pairing_code.py)",
-             s_credentials.passcode, (unsigned) s_credentials.discriminator);
+    const uint8_t *m = s_credentials.mac;
+    ESP_LOGI(TAG, "Pairing: base MAC=%02x:%02x:%02x:%02x:%02x:%02x passcode=%08" PRIu32
+                  " discriminator=%u (manual code: scripts/pairing_code.py <base MAC>)",
+             m[0], m[1], m[2], m[3], m[4], m[5], s_credentials.passcode, (unsigned) s_credentials.discriminator);
     return ESP_OK;
 }
 
