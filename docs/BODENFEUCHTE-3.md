@@ -19,7 +19,7 @@ ein Messeingang, VCC von Sensor 1 kommt an GPIO10.
 
 Der H2 kann nur an GPIO1 bis GPIO5 messen. GPIO2 und GPIO3 sind Strapping-Pins und
 bleiben frei. Die VCC-Pins sind nur waehrend der Messung ihres Sensors HIGH; es ist
-immer hoechstens ein Sensor versorgt. Die Pins sind per `idf.py menuconfig` aenderbar,
+immer hoechstens ein Sensor versorgt. Die Pins stehen in `variants/soil3/sdkconfig.defaults`,
 der Build prueft Doppelbelegungen und Konflikte mit BOOT und LEDs.
 
 Nicht alle drei Sensoren muessen angeschlossen sein. Ein fehlender Sensor wird als

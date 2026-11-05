@@ -3,15 +3,20 @@
 Gemeinsame Grundlage fuer batteriebetriebene DoNetIoT-Sensoren. Erstes Hardwareprofil:
 ESP32-H2 Super Mini (4 MB Flash), externe geregelte 3,3-V-Versorgung.
 
-## Variante drei Bodensensoren (dieser Branch)
+## Varianten
 
-Version 0.5.0-soil3 liest drei kapazitive Bodenfeuchtesensoren nacheinander und meldet
-drei Feuchte-Endpunkte. Jeder Sensor hat eigene Trocken-/Nassreferenzen, kalibriert
-ueber Home Assistant. Produkt `MoistureSensor3`, Produkt-ID `0x8001`, Anlerncode je
-Geraet aus der MAC. Verdrahtung und Bedienung: [BODENFEUCHTE-3.md](docs/BODENFEUCHTE-3.md).
-Gebaut und am Board getestet ist diese Variante noch nicht.
+Eine Codebasis, ein Firmware-Image je Sensorvariante. Details, Bauen und neue
+Varianten: [variants/README.md](variants/README.md).
 
-Die folgenden Abschnitte beschreiben die Ein-Sensor-Variante, auf der sie aufbaut.
+| Variante | Produkt | Produkt-ID | Stand |
+|---|---|---|---|
+| `soil3` | MoistureSensor3, drei Bodenfeuchtesensoren | 0x8001 | startet und wirbt per BLE, Anlernen offen. [BODENFEUCHTE-3.md](docs/BODENFEUCHTE-3.md) |
+| `rain` | RainSensor, analoge Regenplatine | 0x8000 | Anlernen offen, siehe [STAND.md](docs/STAND.md) und Abschnitt Variante Regensensor |
+
+Alle Varianten haben Matter-OTA und den Anlerncode je Geraet aus der Base-MAC.
+
+Der Abschnitt "Aktueller Stand" beschreibt die fruehere Ein-Sensor-Bodenfeuchte
+(`MoistureSensor`, 0x8000), auf der `soil3` aufbaut. Sie ist keine eigene Variante mehr.
 
 ## Aktueller Stand
 
@@ -100,7 +105,9 @@ git push
 ```
 
 Unter **Actions → Build ESP32-H2 firmware** den erfolgreichen Lauf oeffnen und
-das Artefakt **esp32h2-supermini-base** herunterladen und entpacken.
+das Artefakt der gewuenschten Variante (**esp32h2-soil3**, **esp32h2-rain**) herunterladen
+und entpacken. Diagnose-Images ohne Light-sleep: "Run workflow" mit Haken "diagnostic"
+(Artefakt **esp32h2-<variante>-diag**).
 Der Build verwendet ESP-IDF 5.4.1 und den exakten ESP-Matter-Commit aus `versions.env`
 (Releasefamilie Matter 1.4.2). Die aufgeloesten Komponenten-Versionen werden im
 Flash-Paket als `dependencies.lock` mitgeliefert.
@@ -108,8 +115,10 @@ Flash-Paket als `dependencies.lock` mitgeliefert.
 Alternativ mit Docker Desktop im Linux-Container-Modus aus dem Repositoryordner:
 
 ```powershell
-docker run --rm -v "${PWD}:/project" -w /project espressif/esp-matter:release-v1.4.2_idf_v5.4.1 bash scripts/build.sh
+docker run --rm -v "${PWD}:/project" -w /project espressif/esp-matter:release-v1.4.2_idf_v5.4.1 bash scripts/build.sh soil3
 ```
+
+Ohne Variantenname baut das Skript alle Varianten nach `dist/<variante>/`.
 
 Docker benoetigt beim ersten Start mehrere GB Speicher und Internetzugang.
 Eine native Windows-Installation von ESPHome/ESP-IDF allein ersetzt die
@@ -160,7 +169,7 @@ Grundlage: Espressifs [ICD-Beispiel](https://github.com/espressif/esp-matter/tre
 
 ## Variante Regensensor
 
-Auf dem Branch `rain-sensor`: analoge Regenplatine als Matter-Geraetetyp *Rain Sensor*
+Variante `rain`: analoge Regenplatine als Matter-Geraetetyp *Rain Sensor*
 (Boolean State, `true` = Regen). Weiterhin nur Thread, Short Idle Time ICD und Light Sleep.
 
 | Regenplatine | ESP32-H2 | Hinweis |
@@ -173,8 +182,8 @@ Auf dem Branch `rain-sensor`: analoge Regenplatine als Matter-Geraetetyp *Rain S
   Ausreisserfilter, Sensor aus. Kurzer BOOT-Druck loest sofort eine Messung aus.
 - Die Platine liefert nass eine NIEDRIGERE Spannung. Regen beginnt unter
   `BASE_RAIN_WET_BELOW_MV` (1500) und endet ueber `BASE_RAIN_DRY_ABOVE_MV` (2000).
-  Startwerte: trocken und nass im USB-Log (`Rain sensor ... mV`) ablesen und per
-  `idf.py menuconfig` anpassen.
+  Startwerte: trocken und nass im USB-Log (`Rain sensor ... mV`) ablesen und in
+  `variants/rain/sdkconfig.defaults` eintragen.
 - Der virtuelle Testkontakt ist in dieser Variante aus (`BASE_TEST_CONTACT=n`).
 - Die Anlernung laeuft ueber Matter (Code/QR), es steht kein Thread-Schluessel in der Firmware.
-- Nicht gebaut und nicht auf Hardware getestet; `tests/rain_logic.cpp` prueft die Auswertung.
+- Gebaut und geflasht, Anlernen noch offen (siehe [STAND.md](docs/STAND.md)); `tests/rain_logic.cpp` prueft die Auswertung.

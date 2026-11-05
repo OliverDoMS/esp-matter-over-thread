@@ -61,7 +61,7 @@ Alte lokale Pakete `dist-usbdiag`/`dist-lowpower` enthalten keinen Bodenfeuchtec
 ## Voraussetzungen
 
 - ESP32-H2 Super Mini mit 4 MB Flash und USB-Datenkabel.
-- Erfolgreich gebautes, entpacktes Artefakt `esp32h2-supermini-base`.
+- Erfolgreich gebautes, entpacktes Artefakt der Variante, z. B. `esp32h2-soil3` oder `esp32h2-rain`.
 - Python und esptool 4.x auf dem Windows-Rechner.
 - Fuer Matter-over-Thread ein erreichbarer Thread Border Router und ein
   Matter-Controller, beispielsweise Home Assistant mit Matter-Integration.
