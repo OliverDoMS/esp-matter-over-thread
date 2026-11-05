@@ -1,5 +1,6 @@
 // Based on Espressif's public-domain icd_app; application additions Apache-2.0.
 #include "board.h"
+#include "device_identity.h"
 #include "sensors.h"
 #include "soil_moisture.h"
 #include "soil_controls.h"
@@ -84,12 +85,6 @@ void handle_button(intptr_t action_value)
 #else
         ESP_ERROR_CHECK_WITHOUT_ABORT(base::sensors::toggle_test_contact());
 #endif
-        break;
-    case base::ButtonAction::CalibrateDry:
-        ESP_ERROR_CHECK_WITHOUT_ABORT(base::soil::request(base::soil::Request::Dry));
-        break;
-    case base::ButtonAction::CalibrateWet:
-        ESP_ERROR_CHECK_WITHOUT_ABORT(base::soil::request(base::soil::Request::Wet));
         break;
     case base::ButtonAction::Commission:
         open_commissioning_window();
@@ -210,14 +205,16 @@ extern "C" void app_main()
     thread.port_config.task_queue_size = 10;
     ESP_ERROR_CHECK(set_openthread_platform_config(&thread));
 
+    ESP_ERROR_CHECK(base::identity::install());
     ESP_ERROR_CHECK(esp_matter::start(device_event));
+    ESP_ERROR_CHECK(base::identity::publish_names());
     ESP_ERROR_CHECK(base::sensors::start());
     // Initialize the button only after ScheduleWork can safely reach the running stack.
     ESP_ERROR_CHECK(base::init_board(queue_button));
     ESP_LOGI(TAG, "DoNetIoT H2 Base %s: Thread sleepy end device / SIT ICD",
              esp_app_get_description()->version);
 #if CONFIG_BASE_SOIL_MOISTURE
-    ESP_LOGI(TAG, "BOOT: click=measure; double-click=pairing; hold for 1 blink=DRY, 2 blinks=WET, >=10 s rapid blinking=reset; release to confirm");
+    ESP_LOGI(TAG, "BOOT: click=measure all; double-click=pairing; >=10 s rapid blinking=reset, on release; calibrate over Matter");
 #else
     ESP_LOGI(TAG, "BOOT: <1 s TEST contact; 3-9 s pairing; >=10 s factory reset, on release");
 #endif

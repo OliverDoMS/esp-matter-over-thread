@@ -22,11 +22,9 @@ void held(void *, void *)
     const int64_t duration_ms = (esp_timer_get_time() - s_pressed_at) / 1000;
     gpio_set_level(GPIO_NUM_13, base::button_led_on(duration_ms) ? 1 : 0);
     const auto action = base::action_on_release(duration_ms, true);
-    if (action != s_announced_action && action != base::ButtonAction::Wake &&
-        action != base::ButtonAction::TestContact) {
+    if (action != s_announced_action && action == base::ButtonAction::FactoryReset) {
         s_announced_action = action;
-        ESP_LOGI(TAG, "Release BOOT for %s", action == base::ButtonAction::CalibrateDry ? "DRY (1 blink)" :
-                 action == base::ButtonAction::CalibrateWet ? "WET (2 blinks)" : "MATTER FACTORY RESET (rapid blinking)");
+        ESP_LOGI(TAG, "Release BOOT for MATTER FACTORY RESET (rapid blinking)");
     }
 }
 #endif
@@ -106,7 +104,7 @@ esp_err_t base::init_board(ButtonCallback callback)
 #endif
     button_config_t button_config{};
 #if CONFIG_BASE_SOIL_MOISTURE
-    button_config.long_press_time = 1000; // Begin feedback callbacks before the first cue at 2 s.
+    button_config.long_press_time = 1000; // Begin feedback callbacks well before the reset cue at 10 s.
     button_config.short_press_time = 400; // Comfortable double-click interval.
 #endif
     button_gpio_config_t gpio_config{};
@@ -125,7 +123,7 @@ esp_err_t base::init_board(ButtonCallback callback)
 #endif
 #if CONFIG_BASE_BUTTON_LED_FEEDBACK
     ESP_RETURN_ON_ERROR(iot_button_register_cb(button, BUTTON_LONG_PRESS_HOLD, nullptr, held, nullptr), TAG, "LED feedback callback failed");
-    ESP_LOGI(TAG, "Blue GPIO13 LED: 1 blink DRY, 2 blinks WET, rapid blinking RESET; release to confirm");
+    ESP_LOGI(TAG, "Blue GPIO13 LED: rapid blinking RESET; release to confirm");
 #endif
     ESP_LOGI(TAG, "BOOT GPIO%d: power-save button with GPIO wakeup; peripheral power-down disabled",
              CONFIG_BASE_BUTTON_GPIO);

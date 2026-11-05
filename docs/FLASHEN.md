@@ -1,5 +1,21 @@
 # Firmware flashen und testen
 
+## Drei Bodensensoren ab 0.5.0-soil3
+
+Eigene Variante mit Produkt-ID `0x8001`; sie ersetzt keine laufende Ein-Sensor-Firmware
+per Update. Erstinstallation mit `.\flash.ps1 -Port COMxx -EraseAll`.
+
+Diese Variante verwendet NICHT den gemeinsamen Testcode 34970112332. Anlerncode und
+Seriennummer werden aus der MAC des Chips abgeleitet:
+
+```powershell
+python -m esptool --chip esp32h2 --port COMxx read_mac
+python scripts/pairing_code.py <MAC>
+```
+
+Dieselben Werte stehen beim Start im USB-Log (`identity: Pairing: ...`).
+Verdrahtung und Kalibrierung: [BODENFEUCHTE-3.md](BODENFEUCHTE-3.md).
+
 ## Matter OTA und Geraetenamen ab 0.4.0
 
 Das Profil meldet MoistureSensor / DoNetIoT / ESP32-H2 und aktiviert Matter OTA.

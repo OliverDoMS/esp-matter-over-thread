@@ -26,17 +26,18 @@ Option make_option(const char *label, uint8_t mode)
 
 class ModeManager final : public Mode::SupportedModesManager {
 public:
-    Option actions[4] = {make_option("Bereit", 0), make_option("Jetzt messen", 1),
-                         make_option("Trocken kalibrieren", 2), make_option("Nass kalibrieren", 3)};
+    Option actions[base::soil::kActionCount];
     Option intervals[base::soil::kIntervalCount];
     ModeManager()
     {
+        for (uint8_t i = 0; i < base::soil::kActionCount; ++i)
+            actions[i] = make_option(base::soil::kActionLabels[i], i);
         for (uint8_t i = 0; i < base::soil::kIntervalCount; ++i)
             intervals[i] = make_option(base::soil::kIntervals[i].label, i);
     }
     ModeOptionsProvider getModeOptionsProvider(chip::EndpointId endpoint) const override
     {
-        if (endpoint == s_actions) return {actions, actions + 4};
+        if (endpoint == s_actions) return {actions, actions + base::soil::kActionCount};
         if (endpoint == s_interval) return {intervals, intervals + base::soil::kIntervalCount};
         return {};
     }
@@ -108,10 +109,11 @@ esp_err_t base::controls::attribute_changed(esp_matter::attribute::callback_type
     if (!s_active || type != esp_matter::attribute::POST_UPDATE || cluster != Mode::Id ||
         attribute != Mode::Attributes::CurrentMode::Id || value == nullptr) return ESP_OK;
     const uint8_t mode = value->val.u8;
-    if (endpoint == s_actions && mode > 0 && mode < 4) {
-        const auto request = mode == 1 ? base::soil::Request::Measure :
-                             mode == 2 ? base::soil::Request::Dry : base::soil::Request::Wet;
-        const esp_err_t err = base::soil::request(request);
+    if (endpoint == s_actions && mode > 0 && mode < base::soil::kActionCount) {
+        const esp_err_t err = mode == base::soil::kMeasureMode ?
+            base::soil::request(base::soil::Request::Measure) :
+            base::soil::request(base::soil::action_is_dry(mode) ? base::soil::Request::Dry : base::soil::Request::Wet,
+                                base::soil::action_sensor(mode));
         if (err != ESP_OK) operation_finished(false);
         return err;
     }

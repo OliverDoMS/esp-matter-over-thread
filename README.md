@@ -3,6 +3,16 @@
 Gemeinsame Grundlage fuer batteriebetriebene DoNetIoT-Sensoren. Erstes Hardwareprofil:
 ESP32-H2 Super Mini (4 MB Flash), externe geregelte 3,3-V-Versorgung.
 
+## Variante drei Bodensensoren (dieser Branch)
+
+Version 0.5.0-soil3 liest drei kapazitive Bodenfeuchtesensoren nacheinander und meldet
+drei Feuchte-Endpunkte. Jeder Sensor hat eigene Trocken-/Nassreferenzen, kalibriert
+ueber Home Assistant. Produkt `MoistureSensor3`, Produkt-ID `0x8001`, Anlerncode je
+Geraet aus der MAC. Verdrahtung und Bedienung: [BODENFEUCHTE-3.md](docs/BODENFEUCHTE-3.md).
+Gebaut und am Board getestet ist diese Variante noch nicht.
+
+Die folgenden Abschnitte beschreiben die Ein-Sensor-Variante, auf der sie aufbaut.
+
 ## Aktueller Stand
 
 Version 0.4.0-soil-ota meldet das Produkt `MoistureSensor`, den Hersteller

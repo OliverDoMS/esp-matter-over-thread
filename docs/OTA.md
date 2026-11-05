@@ -1,5 +1,10 @@
 # Matter-OTA fuer MoistureSensor
 
+**Drei-Sensor-Variante:** Produkt `MoistureSensor3`, IDs 0xFFF1/0x8001, Paket
+`MoistureSensor3.ota`, SoftwareVersion ab 11. Wegen der eigenen Produkt-ID wird es
+nur Geraeten dieser Variante angeboten. Der Rest dieser Datei beschreibt die
+Ein-Sensor-Variante; der Ablauf ist gleich.
+
 Ab 0.4.0-soil-ota ist der Standard-Matter-OTA-Requestor aktiviert.
 Produkt: MoistureSensor, Hersteller: DoNetIoT, Hardware: ESP32-H2.
 Die IDs bleiben 0xFFF1/0x8000. 0.4.0 hat SoftwareVersion 10; jeder spaetere

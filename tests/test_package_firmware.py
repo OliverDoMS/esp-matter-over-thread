@@ -125,8 +125,8 @@ class PackageTests(unittest.TestCase):
         self.assertTrue((output / "flash.ps1").is_file())
         self.assertTrue((output / "FLASHEN.md").is_file())
         self.assertTrue(manifest["ota_supported"])
-        self.assertEqual((output / "MoistureSensor.ota").read_bytes(), self.ota.read_bytes())
-        self.assertEqual(manifest["files"]["MoistureSensor.ota"], pkg.describe(output / "MoistureSensor.ota"))
+        self.assertEqual((output / "MoistureSensor3.ota").read_bytes(), self.ota.read_bytes())
+        self.assertEqual(manifest["files"]["MoistureSensor3.ota"], pkg.describe(output / "MoistureSensor3.ota"))
 
     def test_sleep_disabled_blocks_packaging_before_esptool(self):
         config_file = self.build / "config" / "sdkconfig.json"
@@ -155,16 +155,6 @@ class PackageTests(unittest.TestCase):
         config_file.write_text(json.dumps(config))
         with patch.object(pkg.subprocess, "run") as merge:
             with self.assertRaisesRegex(ValueError, "PM_POWER_DOWN_PERIPHERAL_IN_LIGHT_SLEEP"):
-                pkg.package(self.build, Path(self.temp.name) / "dist")
-        merge.assert_not_called()
-
-    def test_inverted_direct_gpio_supply_rejected(self):
-        config_file = self.build / "config" / "sdkconfig.json"
-        config = json.loads(config_file.read_text())
-        config["BASE_SOIL_POWER_ACTIVE_LOW"] = True
-        config_file.write_text(json.dumps(config))
-        with patch.object(pkg.subprocess, "run") as merge:
-            with self.assertRaisesRegex(ValueError, "BASE_SOIL_POWER_ACTIVE_LOW"):
                 pkg.package(self.build, Path(self.temp.name) / "dist")
         merge.assert_not_called()
 

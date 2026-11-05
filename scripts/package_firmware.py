@@ -23,9 +23,6 @@ REQUIRED_CONFIG = {
     "CONFIG_BASE_DIAGNOSTIC_NO_SLEEP": "n",
     "CONFIG_BASE_SOIL_MOISTURE": "y",
     "CONFIG_BASE_BUTTON_LED_FEEDBACK": "y",
-    "CONFIG_BASE_SOIL_SWITCHED_POWER": "y",
-    "CONFIG_BASE_SOIL_DIRECT_GPIO_POWER": "y",
-    "CONFIG_BASE_SOIL_POWER_ACTIVE_LOW": "n",
     "CONFIG_BASE_TEST_CONTACT": "n",
     "CONFIG_PM_POWER_DOWN_PERIPHERAL_IN_LIGHT_SLEEP": "n",
     "CONFIG_ENABLE_OTA_REQUESTOR": "y",
@@ -141,7 +138,7 @@ def package(build: Path, output: Path) -> None:
     app = output / "esp_matter_base.bin"
     shutil.copyfile(build / data["app"]["file"], app)
     shutil.copyfile(table, output / "partition-table.bin")
-    shutil.copyfile(ota, output / "MoistureSensor.ota")
+    shutil.copyfile(ota, output / "MoistureSensor3.ota")
     metadata = json.loads((build / "project_description.json").read_text())
     manifest = {
         "chip": "esp32h2", "flash_bytes": FLASH_BYTES,
@@ -152,7 +149,7 @@ def package(build: Path, output: Path) -> None:
         "partition_table_offset": "0xc000",
         "ota_data_offset": "0x1d000", "ota_data_bytes": 8192,
         "files": {name: describe(output / name) for name in
-                  (factory.name, app.name, "partition-table.bin", "MoistureSensor.ota")},
+                  (factory.name, app.name, "partition-table.bin", "MoistureSensor3.ota")},
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     root = Path(__file__).resolve().parents[1]

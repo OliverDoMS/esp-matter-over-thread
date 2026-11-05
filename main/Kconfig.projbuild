@@ -9,7 +9,7 @@ menu "DoNetIoT base system"
 
     config BASE_NODE_LABEL
         string "Matter node label (maximum 32 bytes)"
-        default "DoNetIoT Bodenfeuchte"
+        default "DoNetIoT Bodenfeuchte 3"
 
     config BASE_BUTTON_GPIO
         int "Service button GPIO (active low)"
@@ -35,53 +35,65 @@ menu "DoNetIoT base system"
             is read. Add real sensor endpoints in sensors.cpp in later variants.
 
     config BASE_SOIL_MOISTURE
-        bool "Analog capacitive soil moisture sensor"
+        bool "Three analog capacitive soil moisture sensors"
         default y
         help
-            VCC to 3V3, GND to GND, AOUT to the selected ADC GPIO.
-            Calibrate dry and wet using BOOT before publishing percentages.
+            Each sensor: VCC to its supply GPIO (HIGH only while measured),
+            AOUT to its ADC GPIO, GND to GND. Sensors are read one after another.
+            Calibrate dry and wet per sensor over Matter before percentages appear.
+            Avoid GPIO2 and GPIO3 (strapping pins) for AOUT.
 
-    config BASE_SOIL_ADC_GPIO
-        int "Soil sensor ADC GPIO (H2 ADC1)"
+    config BASE_SOIL_1_ADC_GPIO
+        int "Sensor 1 AOUT GPIO (H2 ADC1)"
         depends on BASE_SOIL_MOISTURE
         range 1 5
         default 4
 
-    config BASE_BUTTON_LED_FEEDBACK
-        bool "Show BOOT hold selection on the blue GPIO13 LED"
-        depends on BASE_SOIL_MOISTURE && BASE_DISABLE_SUPERMINI_LEDS
-        default y
-        help
-            While holding: one blink selects dry calibration, two blinks select
-            wet calibration, rapid blinking after 10 s selects Matter reset.
-            Release BOOT to execute. GPIO13 must not be used as the service button.
+    config BASE_SOIL_1_POWER_GPIO
+        int "Sensor 1 VCC GPIO"
+        depends on BASE_SOIL_MOISTURE
+        range 0 14
+        default 10
 
-    config BASE_SOIL_SWITCHED_POWER
-        bool "Switch the soil sensor supply between measurements"
+    config BASE_SOIL_2_ADC_GPIO
+        int "Sensor 2 AOUT GPIO (H2 ADC1)"
+        depends on BASE_SOIL_MOISTURE
+        range 1 5
+        default 5
+
+    config BASE_SOIL_2_POWER_GPIO
+        int "Sensor 2 VCC GPIO"
+        depends on BASE_SOIL_MOISTURE
+        range 0 14
+        default 11
+
+    config BASE_SOIL_3_ADC_GPIO
+        int "Sensor 3 AOUT GPIO (H2 ADC1)"
+        depends on BASE_SOIL_MOISTURE
+        range 1 5
+        default 1
+
+    config BASE_SOIL_3_POWER_GPIO
+        int "Sensor 3 VCC GPIO"
+        depends on BASE_SOIL_MOISTURE
+        range 0 14
+        default 12
+
+    config BASE_SOIL_CONNECTION_CHECK
+        bool "Report a sensor as unknown when AOUT is not driven by a sensor"
         depends on BASE_SOIL_MOISTURE
         default y
         help
-            The default direct-GPIO profile powers the sensor from GPIO1.
-            Alternatively select an external switch and configure its polarity.
+            Reads AOUT with the internal pulldown before and after power on.
+            Disable only if a connected sensor is rejected by mistake.
 
-    config BASE_SOIL_DIRECT_GPIO_POWER
-        bool "Power the capacitive sensor directly from the supply GPIO"
-        depends on BASE_SOIL_SWITCHED_POWER
+    config BASE_BUTTON_LED_FEEDBACK
+        bool "Show the BOOT reset selection on the blue GPIO13 LED"
+        depends on BASE_SOIL_MOISTURE && BASE_DISABLE_SUPERMINI_LEDS
         default y
         help
-            HIGH supplies the sensor; LOW switches it off. Use maximum drive
-            strength and verify the loaded voltage on the actual sensor.
-
-    config BASE_SOIL_POWER_GPIO
-        int "Sensor supply or external switch control GPIO"
-        depends on BASE_SOIL_SWITCHED_POWER
-        range 0 14
-        default 1
-
-    config BASE_SOIL_POWER_ACTIVE_LOW
-        bool "Power switch is active low (P-channel MOSFET gate)"
-        depends on BASE_SOIL_SWITCHED_POWER && !BASE_SOIL_DIRECT_GPIO_POWER
-        default y
+            Rapid blinking after 10 s selects Matter reset. Release BOOT to
+            execute. GPIO13 must not be used as the service button.
 
     config BASE_SOIL_SETTLE_MS
         int "Sensor settling time after power on (milliseconds)"
