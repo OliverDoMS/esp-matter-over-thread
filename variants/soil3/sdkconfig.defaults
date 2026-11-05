@@ -1,0 +1,17 @@
+# Three capacitive soil moisture sensors, Matter humidity sensor endpoints.
+CONFIG_BASE_SOIL_MOISTURE=y
+CONFIG_BASE_BUTTON_LED_FEEDBACK=y
+CONFIG_BASE_SOIL_1_ADC_GPIO=4
+CONFIG_BASE_SOIL_1_POWER_GPIO=10
+CONFIG_BASE_SOIL_2_ADC_GPIO=5
+CONFIG_BASE_SOIL_2_POWER_GPIO=11
+CONFIG_BASE_SOIL_3_ADC_GPIO=1
+CONFIG_BASE_SOIL_3_POWER_GPIO=12
+CONFIG_BASE_SOIL_CONNECTION_CHECK=y
+CONFIG_BASE_SOIL_SETTLE_MS=500
+# Root node, three moisture endpoints and two ModeSelect controls.
+CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=6
+# Own product ID, so OTA files cannot reach 0x8000 devices (rain variant and the
+# earlier single-sensor MoistureSensor builds).
+# The SDK ships a matching development DAC for 0x8001.
+CONFIG_DEVICE_PRODUCT_ID=0x8001

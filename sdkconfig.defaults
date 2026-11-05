@@ -1,3 +1,5 @@
+# Common settings for every variant. CMakeLists.txt layers
+# variants/<name>/sdkconfig.defaults (and variants/diagnostic.sdkconfig) on top.
 CONFIG_IDF_TARGET="esp32h2"
 CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
 CONFIG_PARTITION_TABLE_CUSTOM=y
@@ -58,20 +60,7 @@ CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
 CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION=y
 # Keep Matter/Thread reachable, sleeping automatically between protocol and sensor work.
 CONFIG_BASE_DIAGNOSTIC_NO_SLEEP=n
-CONFIG_BASE_SOIL_MOISTURE=y
-CONFIG_BASE_BUTTON_LED_FEEDBACK=y
-CONFIG_BASE_TEST_CONTACT=n
-CONFIG_BASE_SOIL_1_ADC_GPIO=4
-CONFIG_BASE_SOIL_1_POWER_GPIO=10
-CONFIG_BASE_SOIL_2_ADC_GPIO=5
-CONFIG_BASE_SOIL_2_POWER_GPIO=11
-CONFIG_BASE_SOIL_3_ADC_GPIO=1
-CONFIG_BASE_SOIL_3_POWER_GPIO=12
-CONFIG_BASE_SOIL_CONNECTION_CHECK=y
-CONFIG_BASE_SOIL_SETTLE_MS=500
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
-# Root node, three moisture endpoints and two ModeSelect controls.
-CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=6
 # Standard Matter BDX updates into the inactive OTA slot.
 CONFIG_ENABLE_OTA_REQUESTOR=y
 CONFIG_CHIP_OTA_IMAGE_BUILD=y
@@ -83,11 +72,7 @@ CONFIG_OTA_AUTO_REBOOT_DELAY_MS=5000
 CONFIG_CUSTOM_COMMISSIONABLE_DATA_PROVIDER=y
 # Development credentials, not a certified commercial product.
 CONFIG_DEVICE_VENDOR_ID=0xFFF1
-# Own product ID, so OTA files cannot reach the single-sensor variant (0x8000).
-# The SDK ships a matching development DAC for 0x8001.
-CONFIG_DEVICE_PRODUCT_ID=0x8001
 CONFIG_USE_TEST_SERIAL_NUMBER=""
-# Pairing code and serial number per device, derived from the chip MAC.
-CONFIG_CUSTOM_COMMISSIONABLE_DATA_PROVIDER=y
+# Product ID and sensor settings come from variants/<name>/sdkconfig.defaults.
 CONFIG_TEST_EVENT_TRIGGER_ENABLED=n
 CONFIG_CHIP_ENABLE_PAIRING_AUTOSTART=y
