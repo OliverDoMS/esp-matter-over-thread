@@ -12,8 +12,8 @@ CONFIG_BASE_SOIL_3_POWER_GPIO=12
 CONFIG_BASE_SOIL_CONNECTION_CHECK=y
 CONFIG_BASE_SOIL_SETTLE_MS=500
 CONFIG_BASE_SOIL_RAW_ENDPOINTS=y
-# Root node, three moisture endpoints, two ModeSelect controls, three raw-value endpoints.
-CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=9
+# Root node, 3 moisture, 2 controls, 3 voltage, 3 moist/dry, 3 settings, 1 maintenance switch.
+CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=16
 # Own product ID, so OTA files cannot reach 0x8000 devices (rain variant and the
 # earlier single-sensor MoistureSensor builds).
 # The SDK ships a matching development DAC for 0x8001.

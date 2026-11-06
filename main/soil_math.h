@@ -37,6 +37,14 @@ constexpr int published_hundredths(int measured, int dry, int wet)
     return references_valid(dry, wet) ? measured : placeholder_hundredths(dry, wet);
 }
 
+// "Soil moist" binary sensor: true unless a calibrated, valid reading is below the
+// watering threshold. Uncalibrated or failed readings never raise a watering alarm.
+constexpr bool moist_enough(int hundredths, int dry, int wet, int water_below_percent)
+{
+    if (!references_valid(dry, wet) || hundredths < 0) return true;
+    return hundredths >= water_below_percent * 100;
+}
+
 // Thresholds from the ESPHome multi-sensor check: 300 mV rise (about 370 of 4095 counts at
 // 12 dB) when powered, and at least 25 % of the reading held against the internal pulldown.
 inline constexpr int kMinRiseCounts = 370;

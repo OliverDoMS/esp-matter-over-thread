@@ -163,12 +163,13 @@ menu "DoNetIoT base system"
             Disable only if a connected sensor is rejected by mistake.
 
     config BASE_SOIL_RAW_ENDPOINTS
-        bool "Expose each sensor's raw ADC value as an extra Matter endpoint"
+        bool "Expose each sensor's voltage (mV) as an extra Matter endpoint"
         depends on BASE_SOIL_MOISTURE
         default y
         help
-            Three Pressure Measurement endpoints carrying the raw ADC counts (0-4095),
-            so wiring and calibration can be checked in Home Assistant. Matter has no
+            Three Pressure Measurement endpoints carrying each sensor's voltage in mV
+            (calibrated ADC conversion), also for rejected readings, so wiring can be
+            checked in Home Assistant. Matter has no
             plain numeric sensor; ignore the pressure unit. Needs three more dynamic
             endpoints (CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT).
 
