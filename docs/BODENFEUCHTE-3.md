@@ -48,6 +48,49 @@ Die Einheit gilt nicht: Home Assistant teilt den Wert vermutlich durch 10 und ze
 Nach dem Update auf 0.6.0 in Home Assistant **Geraet neu abfragen**, damit die neuen
 Endpunkte erscheinen. Abschaltbar mit `CONFIG_BASE_SOIL_RAW_ENDPOINTS=n`.
 
+Bestaetigt am Geraet (06.11.2026): Home Assistant zeigt den Wert durch 10 in kPa
+(Rohwert 2732 erschien als 273,20 kPa).
+
+### Ab 0.7.0: Gießen, Schwellen, Einzelmessungen, Wartungsmodus
+
+Nach dem Vorbild des ESPHome-Bodenfeuchtesensors, beschraenkt auf das, was Matter in
+Home Assistant sauber abbildet. Die Endpunkte 1 bis 8 behalten ihre Nummern; neu sind:
+
+| Endpunkt | Home Assistant | Bedeutung |
+|---|---|---|
+| 9, 10, 11 | Binaersensor Feuchtigkeit (je Sensor 1, 2, 3) | **Feucht** = genug Wasser, **Trocken** = giessen noetig (unter der Schwelle). Unkalibriert oder nach ungueltiger Messung immer „Feucht“, also kein Fehlalarm |
+| 12 | Auswahl „Gießen nötig unter“ | 5–40 %, Standard 10 %, gilt fuer alle drei Sensoren |
+| 13 | Auswahl „Sehr feucht ab“ | 50–90 %, Standard 75 %; das Geraet wertet sie nicht aus, sie ist fuer Template-Sensoren |
+| 14 | Auswahl „Anzahl Einzelmessungen“ | 4–64 ADC-Werte je Messung, getrimmter Mittelwert; Standard 32 wie bisher |
+| 15 | Schalter „Wartungsmodus“ | sperrt den automatischen Light-sleep: USB-Log bleibt lesbar, Geraet bleibt wach. Hoeherer Verbrauch. Wird nie gespeichert, nach jedem Neustart aus |
+
+**Endpunkte 6 bis 8 zeigen ab 0.7.0 die Sensorspannung in mV** (kalibrierte
+ADC-Umrechnung) statt des Rohwerts; Anzeige in HA weiterhin durch 10 als kPa. Die
+Kalibrierwerte im Geraet bleiben Rohwerte, eine bestehende Kalibrierung gilt weiter.
+
+Unsicher: Home Assistant benennt die Binaersensoren vermutlich „Wasserleck“ und die
+Auswahlen nach der Beschreibung des Endpunkts. Nach dem Update **Geraet neu abfragen**,
+danach umbenennen.
+
+Kalibrierwerte als frei eingebbare Zahl, Bodenzustand als Text, Messstatus und „Letzte
+Messung“ hat Matter nicht als Geraetetyp. Den Bodenzustand bildet ein Template-Sensor
+in Home Assistant nach (Entitaets-IDs durch die eigenen ersetzen):
+
+```yaml
+template:
+  - sensor:
+      - name: "Bodenzustand Sensor 1"
+        state: >
+          {% set f = states('sensor.BODENFEUCHTE_SENSOR_1') | float(-1) %}
+          {% set g = states('select.GIESSEN_NOETIG_UNTER') | replace(' %','') | float(10) %}
+          {% set s = states('select.SEHR_FEUCHT_AB') | replace(' %','') | float(75) %}
+          {% if f < 0 %} unbekannt
+          {% elif f in [1.23, 2.34, 3.45] %} nicht kalibriert
+          {% elif f < g %} Trocken - jetzt gießen
+          {% elif f >= s %} Sehr feucht
+          {% else %} Feucht {% endif %}
+```
+
 Home Assistant zeigt die drei Werte voraussichtlich als Luftfeuchte. Sie nach dem
 Anlernen umbenennen; welcher Wert zu welchem Sensor gehoert, zeigt das USB-Log beim
 Start (`Sensor 1: AOUT GPIO4, VCC GPIO10, endpoint ...`) oder eine Kalibrierung.
