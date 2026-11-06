@@ -134,7 +134,7 @@ menu "DoNetIoT base system"
         int "Sensor 2 AOUT GPIO (H2 ADC1)"
         depends on BASE_SOIL_MOISTURE
         range 1 5
-        default 5
+        default 3
 
     config BASE_SOIL_2_POWER_GPIO
         int "Sensor 2 VCC GPIO"
@@ -161,6 +161,17 @@ menu "DoNetIoT base system"
         help
             Reads AOUT with the internal pulldown before and after power on.
             Disable only if a connected sensor is rejected by mistake.
+
+    config BASE_SOIL_RAW_ENDPOINTS
+        bool "Expose each sensor's voltage (mV) as an extra Matter endpoint"
+        depends on BASE_SOIL_MOISTURE
+        default y
+        help
+            Three Pressure Measurement endpoints carrying each sensor's voltage in mV
+            (calibrated ADC conversion), also for rejected readings, so wiring can be
+            checked in Home Assistant. Matter has no
+            plain numeric sensor; ignore the pressure unit. Needs three more dynamic
+            endpoints (CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT).
 
     config BASE_BUTTON_LED_FEEDBACK
         bool "Show the BOOT reset selection on the blue GPIO13 LED"

@@ -3,14 +3,17 @@ CONFIG_BASE_SOIL_MOISTURE=y
 CONFIG_BASE_BUTTON_LED_FEEDBACK=y
 CONFIG_BASE_SOIL_1_ADC_GPIO=4
 CONFIG_BASE_SOIL_1_POWER_GPIO=10
-CONFIG_BASE_SOIL_2_ADC_GPIO=5
+# Sensor 2 moved from GPIO5 (ADC input failed on board DA:0B) to GPIO3. GPIO3 is a
+# strapping pin, but only while BOOT (GPIO9) is held at reset; normal start ignores it.
+CONFIG_BASE_SOIL_2_ADC_GPIO=3
 CONFIG_BASE_SOIL_2_POWER_GPIO=11
 CONFIG_BASE_SOIL_3_ADC_GPIO=1
 CONFIG_BASE_SOIL_3_POWER_GPIO=12
 CONFIG_BASE_SOIL_CONNECTION_CHECK=y
 CONFIG_BASE_SOIL_SETTLE_MS=500
-# Root node, three moisture endpoints and two ModeSelect controls.
-CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=6
+CONFIG_BASE_SOIL_RAW_ENDPOINTS=y
+# Root node, 3 moisture, 2 controls, 3 voltage, 3 moist/dry, 3 settings, 1 maintenance switch.
+CONFIG_ESP_MATTER_MAX_DYNAMIC_ENDPOINT_COUNT=16
 # Own product ID, so OTA files cannot reach 0x8000 devices (rain variant and the
 # earlier single-sensor MoistureSensor builds).
 # The SDK ships a matching development DAC for 0x8001.

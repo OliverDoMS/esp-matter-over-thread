@@ -23,6 +23,10 @@ namespace {
 constexpr char TAG[] = "sensors";
 #if CONFIG_BASE_SOIL_MOISTURE
 uint16_t s_soil_endpoint_ids[base::soil::kSensorCount] = {};
+#if CONFIG_BASE_SOIL_RAW_ENDPOINTS
+uint16_t s_soil_raw_endpoint_ids[base::soil::kSensorCount] = {};
+#endif
+uint16_t s_soil_moist_endpoint_ids[base::soil::kSensorCount] = {};
 #endif
 #if CONFIG_BASE_TEST_CONTACT
 uint16_t s_endpoint_id = 0;
@@ -151,8 +155,9 @@ esp_err_t base::sensors::create_endpoints(esp_matter::node_t *node)
     soil_config.relative_humidity_measurement.max_measured_value = static_cast<uint16_t>(10000);
     for (uint8_t i = 0; i < base::soil::kSensorCount; ++i) {
         // Home Assistant only creates an entity when the value is not null at its interview.
-        soil_config.relative_humidity_measurement.measured_value = base::soil::calibrated(i) ?
-            nullable<uint16_t>() : nullable<uint16_t>(static_cast<uint16_t>(base::soil::kUncalibratedHundredths));
+        const int initial = base::soil::initial_hundredths(i);
+        soil_config.relative_humidity_measurement.measured_value = initial < 0 ?
+            nullable<uint16_t>() : nullable<uint16_t>(static_cast<uint16_t>(initial));
         auto *soil_endpoint = esp_matter::endpoint::humidity_sensor::create(
             node, &soil_config, esp_matter::ENDPOINT_FLAG_NONE, nullptr);
         if (soil_endpoint == nullptr) return ESP_ERR_NO_MEM;
@@ -162,6 +167,37 @@ esp_err_t base::sensors::create_endpoints(esp_matter::node_t *node)
     }
     const esp_err_t controls_error = base::controls::create_endpoints(node);
     if (controls_error != ESP_OK) return controls_error;
+#if CONFIG_BASE_SOIL_RAW_ENDPOINTS
+    // Created after the controls, so endpoints 1-5 keep their numbers from earlier versions.
+    esp_matter::endpoint::pressure_sensor::config_t raw_config{};
+    raw_config.identify.identify_type = 0;
+    raw_config.pressure_measurement.pressure_measured_value = nullable<int16_t>(static_cast<int16_t>(0));
+    raw_config.pressure_measurement.pressure_min_measured_value = nullable<int16_t>(static_cast<int16_t>(0));
+    raw_config.pressure_measurement.pressure_max_measured_value = nullable<int16_t>(static_cast<int16_t>(4095));
+    for (uint8_t i = 0; i < base::soil::kSensorCount; ++i) {
+        auto *raw_endpoint = esp_matter::endpoint::pressure_sensor::create(
+            node, &raw_config, esp_matter::ENDPOINT_FLAG_NONE, nullptr);
+        if (raw_endpoint == nullptr) return ESP_ERR_NO_MEM;
+        s_soil_raw_endpoint_ids[i] = esp_matter::endpoint::get_id(raw_endpoint);
+        ESP_LOGI(TAG, "Voltage (mV) of soil sensor %d on endpoint %u (Matter pressure compatibility)",
+                 i + 1, s_soil_raw_endpoint_ids[i]);
+    }
+#endif
+    // 0.7.0: added after every earlier endpoint, so endpoints 1-8 keep their numbers.
+    // Water Leak Detector: Home Assistant shows a moisture binary sensor, "moist" or "dry";
+    // dry means watering needed. Starts moist, so no alarm appears before the first reading.
+    esp_matter::endpoint::water_leak_detector::config_t moist_config{};
+    moist_config.identify.identify_type = 0;
+    moist_config.boolean_state.state_value = true;
+    for (uint8_t i = 0; i < base::soil::kSensorCount; ++i) {
+        auto *moist_endpoint = esp_matter::endpoint::water_leak_detector::create(
+            node, &moist_config, esp_matter::ENDPOINT_FLAG_NONE, nullptr);
+        if (moist_endpoint == nullptr) return ESP_ERR_NO_MEM;
+        s_soil_moist_endpoint_ids[i] = esp_matter::endpoint::get_id(moist_endpoint);
+        ESP_LOGI(TAG, "Soil sensor %d moist/dry (watering) on endpoint %u", i + 1, s_soil_moist_endpoint_ids[i]);
+    }
+    const esp_err_t settings_error = base::controls::create_settings_endpoints(node);
+    if (settings_error != ESP_OK) return settings_error;
 #endif
 #if CONFIG_BASE_TEST_CONTACT
     esp_matter::endpoint::contact_sensor::config_t config{};
@@ -198,7 +234,11 @@ esp_err_t base::sensors::start()
     xTaskNotifyGive(s_task); // First measurement right after startup
 #endif
 #if CONFIG_BASE_SOIL_MOISTURE
-    const esp_err_t err = base::soil::start(s_soil_endpoint_ids);
+#if CONFIG_BASE_SOIL_RAW_ENDPOINTS
+    const esp_err_t err = base::soil::start(s_soil_endpoint_ids, s_soil_raw_endpoint_ids, s_soil_moist_endpoint_ids);
+#else
+    const esp_err_t err = base::soil::start(s_soil_endpoint_ids, nullptr, s_soil_moist_endpoint_ids);
+#endif
     if (err == ESP_OK) base::controls::start();
     return err;
 #else

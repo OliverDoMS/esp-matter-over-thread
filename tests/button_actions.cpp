@@ -41,7 +41,8 @@ static_assert(moisture_hundredths(2000, INT32_MAX, INT32_MIN) == -1);
 using base::soil::published_hundredths;
 static_assert(published_hundredths(5000, -1, -1) == 123); // Not calibrated
 static_assert(published_hundredths(-1, -1, -1) == 123); // Not calibrated, not connected
-static_assert(published_hundredths(-1, 2752, -1) == 123); // Only dry set
+static_assert(published_hundredths(-1, 2752, -1) == 234); // Only dry set: progress visible
+static_assert(published_hundredths(-1, -1, 1400) == 345); // Only wet set
 static_assert(published_hundredths(5000, 3000, 1000) == 5000);
 static_assert(published_hundredths(-1, 3000, 1000) == -1); // Calibrated, reading failed
 static_assert(published_hundredths(0, 3000, 1000) == 0);

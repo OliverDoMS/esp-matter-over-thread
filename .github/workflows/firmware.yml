@@ -21,6 +21,7 @@ jobs:
       - run: python3 -m unittest discover -s tests -v
       - run: g++ -std=c++17 -I main -fsyntax-only tests/button_actions.cpp
       - run: g++ -std=c++17 -I main tests/rain_logic.cpp -o /tmp/rain_logic && /tmp/rain_logic
+      - run: g++ -std=c++17 -Wall -I main tests/soil_logic.cpp -o /tmp/soil_logic && /tmp/soil_logic
       - shell: pwsh
         run: ./tests/test_flash.ps1
 
