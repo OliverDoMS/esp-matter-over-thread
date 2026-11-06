@@ -21,6 +21,16 @@ menu "DoNetIoT base system"
             GPIO9 is the BOOT button on the documented H2 Super Mini layout.
             Do not hold BOOT during reset unless entering the ROM downloader.
 
+    config BASE_THREAD_TX_POWER_DBM
+        int "Thread (IEEE 802.15.4) transmit power in dBm"
+        range -24 20
+        default 20
+        help
+            Set explicitly after Thread start and read back into the log.
+            The ESP-IDF default is not documented in this project; 20 dBm
+            is the ESP32-H2 maximum and helps outdoor links through walls.
+            Higher power raises the current of each transmission.
+
     config BASE_DISABLE_SUPERMINI_LEDS
         bool "Turn off GPIO13 LED and clear GPIO8 WS2812 at startup"
         default y

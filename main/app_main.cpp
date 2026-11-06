@@ -20,6 +20,9 @@
 #include <app/server/Server.h>
 #include <platform/CHIPDeviceLayer.h>
 #include <platform/ESP32/OpenthreadLauncher.h>
+#include <esp_openthread.h>
+#include <esp_openthread_lock.h>
+#include <openthread/platform/radio.h>
 
 #if !CONFIG_IDF_TARGET_ESP32H2 || !CONFIG_ENABLE_ICD_SERVER || !CONFIG_OPENTHREAD_MTD
 #error "This base profile requires ESP32-H2, OpenThread MTD and the Matter ICD server"
@@ -56,6 +59,26 @@ constexpr bool kDiagnosticNoSleep = true;
 #else
 constexpr bool kDiagnosticNoSleep = false;
 #endif
+
+void apply_thread_tx_power()
+{
+    otInstance *instance = esp_openthread_get_instance();
+    if (instance == nullptr) {
+        ESP_LOGW(TAG, "Thread TX power not set: OpenThread instance not ready");
+        return;
+    }
+    int8_t actual = 0;
+    esp_openthread_lock_acquire(portMAX_DELAY);
+    const otError set_err = otPlatRadioSetTransmitPower(instance, CONFIG_BASE_THREAD_TX_POWER_DBM);
+    const otError get_err = otPlatRadioGetTransmitPower(instance, &actual);
+    esp_openthread_lock_release();
+    if (set_err != OT_ERROR_NONE || get_err != OT_ERROR_NONE) {
+        ESP_LOGW(TAG, "Thread TX power: set=%d get=%d (OpenThread errors)", set_err, get_err);
+        return;
+    }
+    ESP_LOGI(TAG, "Thread TX power requested %d dBm, radio reports %d dBm",
+             CONFIG_BASE_THREAD_TX_POWER_DBM, actual);
+}
 
 void open_commissioning_window()
 {
@@ -207,6 +230,7 @@ extern "C" void app_main()
 
     ESP_ERROR_CHECK(base::identity::install());
     ESP_ERROR_CHECK(esp_matter::start(device_event));
+    apply_thread_tx_power();
     ESP_ERROR_CHECK(base::identity::publish_names());
     ESP_ERROR_CHECK(base::sensors::start());
     // Initialize the button only after ScheduleWork can safely reach the running stack.
