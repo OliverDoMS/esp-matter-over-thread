@@ -124,7 +124,7 @@ menu "DoNetIoT base system"
         int "Sensor 2 AOUT GPIO (H2 ADC1)"
         depends on BASE_SOIL_MOISTURE
         range 1 5
-        default 5
+        default 3
 
     config BASE_SOIL_2_POWER_GPIO
         int "Sensor 2 VCC GPIO"

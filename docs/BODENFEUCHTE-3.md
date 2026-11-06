@@ -11,14 +11,18 @@ Board stromlos verdrahten. GND aller Sensoren an GND.
 | Sensor | AOUT | VCC |
 |---|---|---|
 | 1 | GPIO4 | GPIO10 |
-| 2 | GPIO5 | GPIO11 |
+| 2 | **GPIO3** (bis 0.6.0: GPIO5) | GPIO11 |
 | 3 | GPIO1 | GPIO12 |
 
 Achtung, anders als die Ein-Sensor-Variante: Dort liegt VCC an GPIO1. Hier ist GPIO1
 ein Messeingang, VCC von Sensor 1 kommt an GPIO10.
 
-Der H2 kann nur an GPIO1 bis GPIO5 messen. GPIO2 und GPIO3 sind Strapping-Pins und
-bleiben frei. Die VCC-Pins sind nur waehrend der Messung ihres Sensors HIGH; es ist
+Der H2 kann nur an GPIO1 bis GPIO5 messen. Ab 0.6.1 misst Sensor 2 an GPIO3, weil
+der GPIO5-Eingang von Board DA:0B ausfiel: mit Sensor aus und Pulldown blieb er bei
+rund 0,4 V (rest=501), obwohl aussen 2,3 V anlagen. GPIO3 ist ein Strapping-Pin, wirkt
+laut RIOT-Doku zum H2 aber nur, wenn BOOT (GPIO9) beim Reset gedrueckt ist; ein
+beim Start stromloser Sensor stoert den normalen Start daher voraussichtlich nicht
+(am Board noch zu bestaetigen). GPIO2 bleibt frei. GPIO5 ist unbelegt. Die VCC-Pins sind nur waehrend der Messung ihres Sensors HIGH; es ist
 immer hoechstens ein Sensor versorgt. Die Pins stehen in `variants/soil3/sdkconfig.defaults`,
 der Build prueft Doppelbelegungen und Konflikte mit BOOT und LEDs.
 

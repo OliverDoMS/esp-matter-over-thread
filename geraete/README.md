@@ -35,6 +35,7 @@ Das Geraet schreibt beim Start Base-MAC und Code ins USB-Log
 | Seriennummer nach MAC-Fix | DNIOT-744DBD65DA0B |
 | Produkt | MoistureSensor3, 0xFFF1/0x8001 |
 | Matter-Endpunkte | 1-3 Bodenfeuchte Sensor 1-3, 4 Bedienen, 5 Messintervall |
+| Hardware-Hinweis | 06.11.2026: ADC-Eingang GPIO5 defekt (rest=501, raw=478, pulldown=437 bei 2,3 V aussen). Sensor 2 AOUT auf GPIO3 umgeloetet, ab Firmware 0.6.1-soil3 |
 | Status | Startet, Anlernfenster und BLE-Werbung im Log bestaetigt. Anlernen offen. Beim Start waren laut Anschlusspruefung keine Sensoren angeschlossen. |
 | Kalibrierung | keine |
 
